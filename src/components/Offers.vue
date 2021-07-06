@@ -154,6 +154,10 @@ export default {
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
+                
+                xapp.openTxViewer(txId, this.account)
+                // if(data.nodetype === 'MAINNET') xapp.openExternalBrowser(`https://livenet.xrpl.org/transactions/${txId}`)
+                // else if(data.nodetype === 'TESTNET') xapp.openExternalBrowser(`https://testnet.xrpl.org/transactions/${txId}`)
             } catch(e) {
                 this.$emitter.emit('modal', {
                     type: 'error',
