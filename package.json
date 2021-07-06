@@ -7,11 +7,22 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^1.2.35",
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/vue-fontawesome": "^3.0.0-4",
+    "@kyvg/vue3-notification": "^2.3.3",
     "core-js": "^3.6.5",
-    "vue": "^3.0.0"
+    "mitt": "^3.0.0",
+    "redaxios": "^0.4.1",
+    "vue": "^3.0.0",
+    "vue-i18n": "^9.1.6",
+    "vuex": "^4.0.0-0",
+    "xrpl-client": "^1.9.1",
+    "xrpl-orderbook-reader": "^0.3.3"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
+    "@vue/cli-plugin-vuex": "~4.5.0",
     "@vue/cli-service": "~4.5.0",
     "@vue/compiler-sfc": "^3.0.0"
   },

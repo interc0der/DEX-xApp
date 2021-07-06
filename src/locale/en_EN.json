@@ -1,0 +1,139 @@
+{
+    "ledger": {
+        "response_transaction": {
+            "temDISABLED": "Occurs if the DeletableAccounts amendment is not enabled.",
+            "temDST_IS_SRC": "Occurs if the Destination matches the sender of the transaction (Account field).",
+            "tecDST_TAG_NEEDED": "Occurs if the Destination account requires a destination tag, but the DestinationTag field was not provided.",
+            "tecNO_DST": "Occurs if the Destination account is not a funded account in the ledger.",
+            "tecNO_PERMISSION":	"Occurs if the Destination account requires deposit authorization and the sender is not preauthorized.",
+            "tecTOO_SOON": "Occurs if the sender's Sequence number is too high. The transaction's Sequence number plus 256 must be less than the current Ledger Index.",
+            "tecHAS_OBLIGATIONS": "Occurs if the account to be deleted is connected to objects that cannot be deleted in the ledger. (This includes objects created by other accounts, such as escrows.)",
+            "tefTOO_BIG": "Occurs if the sending account is linked to more than 1000 objects in the ledger. The transaction could succeed on retry if some of those objects were deleted separately first."
+        },
+        "request_data_response_ws": {
+            "invalidParams": "One or more fields are specified incorrectly, or one or more required fields are missing.",
+            "lgrNotFound": "The ledger specified by the ledger_hash or ledger_index does not exist, or it does exist but the server does not have it.",
+            "actNotFound": "The Address specified in the account field of the request does not correspond to an account in the ledger."
+        }
+    },
+    "test": {
+        "welcome_header": "Welcome to the DEX trading xApp!",
+        "welcome_body": "We will ask you a couple of question before you can use this app. We want to make sure you have basic trading knowledge and understand the associated risks. XRPL Labs (the creators of XUMM) is not responsible for any loss in funds. Trading on the XRP Ledger DEX and using this xApp is at your own risk. Trade responsibly!",
+        "button_start": "Take the test",
+        "button_next": "Next question",
+        "button_finish": "Check answers",
+        "button_launch": "Launch the xApp",
+        "button_close": "Close this xApp",
+        "no_answer": "Please select an answer",
+        "passed": "Passed",
+        "failed": "Failed",
+        "score": "Score",
+        "perfect_score": "All answers are correct. You can use this xApp ",
+        "pass_score": "You made some mistakes. Please read the questions and answers carefully",
+        "failed_score": "You have failed the test. Please educate yourself on trading, the DEX, offers, rates, etc. and retake the test",
+        "questions": {
+            "market_limit_order": "What are the two correct execution options for an order to buy or sell assets?",
+            "limit_price": "You want to buy 10 XRP in exchange for 10 USD. How do you proceed?",
+            "order_types": "There are three order types for this xApp, which answer describes the 'Good Till Canceled' order type best?",
+            "fee": "How will the fee for trading a non-XRP currency with an issuer configured trading fee of 0.2% be calculated?",
+            "liablility": "Who is responsible for trading and risks that come with trading?"
+        },
+        "answers": {
+            "market_limit_order": {
+                "0": "Market orders will get you the best price available. Limit orders will limit the quantity compared to market orders.",
+                "1": "Market orders execute as quickly as possible at the current market price. Limit orders set the maximum or minimum price at which you are willing to buy or sell.",
+                "2": "Market orders will always have a net positive effect on the transaction. Limit orders are fixed and can neither have a positive or negative effect.",
+                "3": "Market orders have more options available compared to limit orders."
+            },
+            "limit_price": {
+                "0": "You execute a market order.",
+                "1": "With the currency pair XRP/USD place a buy order with a limit price at 10 USD, and the quantity at 1 USD.",
+                "2": "With the currency pair XRP/USD place a buy order with a limit price at 1 USD, and the quantity at 1 USD.",
+                "3": "With the currency pair XRP/USD place a buy order with a limit price at 1 USD, and the quantity at 10 USD."
+            },
+            "order_types": {
+                "0": "'Good Till canceled' orders allow you to wait and realtime cancel the order if you no longer want it to execute.",
+                "1": "'Good Till canceled' orders allow the XRP Ledger to cancel your order if the rate can't be matched.",
+                "2": "'Good Till canceled' is a type of order that a trader may place to buy or sell an asset that remains active until either the order is filled or the trader cancels it.",
+                "3": "'Good Till canceled' orders are immediately matched or cancelled if they can't immediately be matched."
+            },
+            "fee": {
+                "0": "A fee of 0.2% will be *added* to your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which makes a net total of 10.02USD for 10 XRP.",
+                "1": "A fee of 0.2% is part of your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which makes a net total of 10USD for 0.98 XRP.",
+                "2": "A fee of 0.2% will be *removed* from your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which results in receieving net total of 10.02 XRP in exchange for 10.02USD.",
+                "3": "Trading on the DEX has the same fees as an XRP transaction, approximately 12 Drops"
+            },
+            "liablility": {
+                "0": "The author of the tutorials and documentation about trading and the XRP Ledger decentralized exchange.",
+                "1": "My favourite exchange and/or the token issuer on the XRP Ledger is responsible. If I make a mistake, I can submit a support ticket to revert my trade.",
+                "2": "I and I alone am responsible for managing my assets and secret keys & my trading, entered rates, etc.",
+                "3": "With a DEX I can always get my lost assets back"
+            }
+        }
+    },
+    "xapp": {
+        "trade": {
+            "buy": "Buy",
+            "sell": "Sell",
+            "order_types": {
+                "market_order": "Market",
+                "limit_order": "Limit"
+            },
+            "limit_price": "Limit Price",
+            "quantity": "Quantity",
+            "funds": "Funds",
+            "paying": "Paying",
+            "receiving": "Receive",
+            "confirm_order": "Place order",
+            "order_methods": {
+                "good_till_cancel": "Good Till Cancel",
+                "immediate_or_cancel": "Immediate Or Cancel",
+                "fill_or_kill": "Fill Or Kill",
+                "good_till_date": "Good Till Date (Not Implemented)"
+            },
+            "base": "Base",
+            "quote": "Quote",
+            "issuer": "Issuer"
+        },
+        "order_book": {
+            "price": "Price",
+            "quantity": "Quantity"
+        },
+        "orders": {
+            "orders": "Orders",
+            "history": "History",
+            "pay": "Pays",
+            "get": "Gets",
+            "cancel": "Cancel Order",
+            "info": "Get Info",
+            "no_open_orders": "There are no open orders",
+            "no_history_orders": "No order history"
+        },
+        "header": {
+            "select_pair": "Currency Pair",
+            "select_currency": "Select Currency",
+            "select_issuer": "Select Issuer"
+        },
+        "button": {
+            "try_again": "try again",
+            "account_not_found_login_button": "Login",
+            "close": "Close"
+        },
+        "error": {
+            "modal_title": "Oops",
+            "get_ott_data": "Failed to fetch your XUMM data",
+            "subscribe_to_account": "Failed to subscribe to the XRP Ledger",
+            "sign_offer_create": "A wild error occured creating an Offer",
+            "signin": "A wild error occured trying to login",
+            "sign_cancel_offer": "A wild error occured trying to cancel an Offer",
+            "get_offer_data": "A wild error occured trying to get your Offer data",
+            "get_curated_assets": "Currency list is not available from the API",
+            "react_native_webview": "There is an error with the webview",
+            "market_price": "There is a problem with the market price",
+            "version": "Update XUMM to use this feature"
+        },
+        "info": {
+            "no_funds": "You do not have funds for this currency"
+        }
+    }
+}
