@@ -1,26 +1,26 @@
 <template>
-    <div class="container">
+    <!-- <div class="container">
         <TradeHeader />
         <hr>
         <div class="row padding">
             <TradeForm />
-            <div class="container">
-                <OrderBook />
-                <!-- <OrderBook @limitPrice="setLimitPrice" @marketSafeChange="toggleMarketOffers" @marketInfo="priceUpdate" /> -->
-            </div>
+            <OrderBook />
         </div>
         <hr class="divide">
-        <Offers />
-    </div>
+        <TradeData />
+    </div> -->
+    <Events/>
 </template>
 
 <script>
-import Offers from '@/components/Offers'
+import TradeData from '@/components/TradeData.vue'
 import OrderBook from '@/components/OrderBook.vue'
 import TradeHeader from '@/components/TradeHeader.vue'
 import TradeForm from '@/components/TradeForm.vue'
 
+import Events from '@/views/Events.vue'
+
 export default {
-    components: { Offers, OrderBook, TradeHeader, TradeForm }    
+    components: { TradeData, OrderBook, TradeHeader, TradeForm, Events }    
 }
 </script>

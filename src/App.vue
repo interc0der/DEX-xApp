@@ -3,7 +3,7 @@
   <div id="view">
         <Test v-if="!init" @passed="completedTest" />
         <Trade v-else-if="ready" />
-        <!-- <Modal /> -->
+        <Modal />
         <!-- <Alert /> -->
         <div v-if="error" class="column h-100">
             <div id="failed-start" class="column">
@@ -17,10 +17,8 @@
 
 <script>
 import Trade from '@/views/Trade.vue'
-// import Spinner from '@/components/Spinner.vue'
-// import SpinnerModal from '@/components/SpinnerModal.vue'
 // import Alert from '@/components/Alert.vue'
-// import Modal from '@/components/Modal.vue'
+import Modal from '@/components/Modal.vue'
 import Test from '@/components/Test.vue'
 
 import xapp from './plugins/xapp'
@@ -30,10 +28,8 @@ export default {
 	name: 'App',
 	components: {
 		Trade,
-        // Spinner,
-        // SpinnerModal,
         // Alert,
-        // Modal,
+        Modal,
         Test
 	},
 	data() {
@@ -60,6 +56,7 @@ export default {
                 case "MAINNET":
                     return 'wss://xrplcluster.com'
                 case "TESTNET":
+                    return 'wss://s.altnet.rippletest.net:51233'
                     return 'wss://testnet.xrpl-labs.com'
             }
             return 'wss://xrplcluster.com'
@@ -98,10 +95,7 @@ export default {
                 }
             }
 		} catch(e) {}
-		
-		// Todo
-		this.ready = true
-        // Todo
+        this.ready = true
 
 		client.send({
 			command: 'subscribe',
@@ -129,6 +123,7 @@ export default {
     --red: red;
     --var-orange: orange;
     --var-border: white;
+    --var-backdrop: 255, 255, 255
 }
 
 html, body {
@@ -265,9 +260,6 @@ hr.divide {
     height: 100%;
     align-items: center;
 }
-#currency-pair-select-btn {
-    color: var(--var-txt-color);
-}
 .btn.btn-secondary {
     background-color: var(--var-secondary) !important;
     color: grey !important;
@@ -288,7 +280,7 @@ hr.divide {
     border-radius: 15px !important;
 }
 .header {
-    margin: 10px;
+    margin: 0 10px;
     margin-bottom: 0 !important;
     text-align: center;
     color: var(--var-primary);
@@ -347,8 +339,8 @@ select {
     color: var(--var-txt-color);
     background-color: var(--var-bg-color);
     padding: 0 10px;
-    height: 40px;
-    font-size: 1rem;
+    height: 30px;
+    font-size: 0.8rem;
     border-radius: 10px;
     border: 1px solid var(--var-border);
 }

@@ -5,13 +5,11 @@ const state = {
     currencyPair: {
         base: {
             currency: 'XRP',
-            issuer: null,
-            limit: null
+            issuer: null
         },
         quote: {
             currency: 'USD',
-            issuer: 'rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq',
-            limit: null
+            issuer: 'rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq'
         }
     }
 }

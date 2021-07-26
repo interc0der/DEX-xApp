@@ -16,7 +16,7 @@
             </div>
         </div> -->
         <div class="column">
-            <a @click="selectActive = true" id="currency-pair-select-btn" class="">{{ currencyCodeFormat(currencyPair.base.currency) }}/{{ currencyCodeFormat(currencyPair.quote.currency) }}
+            <a @click="selectActive = true" id="currency-pair-select-btn">{{ currencyCodeFormat(currencyPair.base.currency) }}/{{ currencyCodeFormat(currencyPair.quote.currency) }}
                 <fa size="xs" :icon="['fas', 'chevron-down']"/>
             </a>
         </div>
@@ -118,5 +118,10 @@ export default {
 </script>
 
 <style scoped>
-
+#currency-pair-select-btn {
+    color: var(--var-txt-color);
+    font-weight: 600;
+    text-align: start;
+    padding: 5px 10px;
+}
 </style>

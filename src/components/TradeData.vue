@@ -5,12 +5,12 @@
             <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span>
         </div>
         <hr>
-        <div v-if="Object.keys(offers).length < 1 && activeTabIndex === 0" id="no-data-placeholder">
+        <div v-if="offers.length < 1 && activeTabIndex === 0" id="no-data-placeholder">
             <i>🚀</i>
             <h4>{{ $t('xapp.orders.no_open_orders') }}</h4>
         </div>
         <!-- txoffers -->
-        <div v-else-if="txs.length < 1 && activeTabIndex === 1" id="no-data-placeholder">
+        <div v-else-if="!(Object.keys(history).length > 1 || history.length > 1) && activeTabIndex === 1" id="no-data-placeholder">
             <i>🚀</i>
             <h4>{{ $t('xapp.orders.no_history_orders') }}</h4>
         </div>
@@ -18,24 +18,28 @@
             <div class="table-container">
 
                 <template v-if="activeTabIndex === 0">
-                    <div class="order-item" v-for="(item, seq, index) in offers" :key="index">
+                    <div class="order-item" v-for="(item, seq, index) in offers">
                         <div class="row" style="margin: 0; padding-left: 5px;">
-                            <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item)">{{ getOrderTrade(item) }}</label>
+                            <label v-if="getOrderTrade(item.created)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label>
                             <label v-else class="trade-label open">{{ 'open' }}</label>
                         </div>
 
                         <div class="row" style="padding: 5px 0 5px 15px;">
-                            <div class="column">
-                                <h6>{{ `${$t('xapp.orders.pay')} (${currencyCodeFormat(item.TakerGets.currency, 16)})`}}</h6>
-                                <span class="number">{{ `${currencyFormat(item.TakerGets.value, item.TakerGets.currency)}` }}</span>
+                            <div v-if="tradingPair.base.currency === item.created.TakerGets.currency || tradingPair.quote.currency === item.created.TakerPays.currency" class="column">
+                                <h6>{{ `filled/total (${currencyCodeFormat(item.created.TakerGets.currency, 16)})` }}</h6>
+                                <span class="number">{{ `${QuantityFormat(item.TakerGetsFilled, item.open.TakerGets.currency)}/${QuantityFormat(item.created.TakerGets.value, item.open.TakerGets.currency)}` }}</span>
+                            </div>
+                            <div v-else-if="tradingPair.base.currency === item.created.TakerPays.currency || tradingPair.quote.currency === item.created.TakerGets.currency" class="column">
+                                <h6>{{ `filled/total (${currencyCodeFormat(item.created.TakerPays.currency, 16)})` }}</h6>
+                                <span class="number">{{ `${QuantityFormat(item.TakerPaysFilled, item.open.TakerPays.currency)}/${QuantityFormat(item.created.TakerPays.value, item.open.TakerPays.currency)}` }}</span>
+                            </div>
+                            <div v-else class="column">
+                                <h6>{{ `pays/gets` }}</h6>
+                                <span class="number">{{ `?No base/No quote?` }}</span>
                             </div>
                             <div class="column">
-                                <h6>{{ `${$t('xapp.orders.get')} (${currencyCodeFormat(item.TakerPays.currency, 16)})` }}</h6>
-                                <span class="number">{{ `${currencyFormat(item.TakerPays.value, item.TakerPays.currency)}` }}</span>
-                            </div>
-                            <div class="column">
-                                <h6>Price HC</h6>
-                                <span v-if="getOrderTrade(item)" class="number">{{ currencyFormat(getOrderPrice(item), tradingPair.base.currency) }}</span>
+                                <h6>{{ `Price: ${currencyCodeFormat(item.created.TakerGets.currency, 4)}/${currencyCodeFormat(item.created.TakerPays.currency, 4)}` }}</h6>
+                                <span v-if="getOrderTrade(item.created)" class="number">{{ priceFormat(getOrderPrice(item.created)) }}</span>
                                 <span v-else>--</span>
                             </div>
                         </div>
@@ -48,14 +52,23 @@
                 </template>
 
                 <template v-else-if="activeTabIndex === 1">
-                    <div class="order-item" v-for="(item, index) in txs" :key="index">
+                    <div class="order-item" v-for="(item, index) in history">
+                        <div class="row">
+                            {{ currencyCodeFormat(item.created.TakerGets.currency, 16) }}
+                            ->
+                            {{ currencyCodeFormat(item.created.TakerPays.currency, 16) }}
+                        </div>
                         <div class="row" style="margin: 0; padding-left: 5px;">
-                            <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item)">{{ getOrderTrade(item) }}</label>
-                            <label v-else class="trade-label open">{{ 'Create' }}</label>
-                            <span style="margin-left: auto">DATE: {{ epochToDate(item.date) }}</span>
+                            <label v-if="getOrderTrade(item.created)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label>
+                            <label class="trade-label open">{{ item.status }}</label>
+                            <label class="trade-label open">{{ item.condition }}</label>
                         </div>
 
-                        <div class="row" style="padding: 5px 0 5px 15px;">
+                        <div class="row">
+                            <span class="number">#{{ item.sequence }}</span>
+                            <span class="number" style="margin-left: auto; margin-right: 10px;">{{ epochToDate(item.created.date) }}</span>
+                        </div>
+                        <!-- <div class="row" style="padding: 5px 0 5px 15px;">
                             <div class="column">
                                 <h6>{{ `${$t('xapp.orders.pay')} (${currencyCodeFormat(item.TakerGets.currency, 16)})`}}</h6>
                                 <span class="number">{{ `${currencyFormat(item.TakerGets.value, item.TakerGets.currency)}` }}</span>
@@ -72,8 +85,9 @@
                         </div>
                         <div class="action-row">
                             <a @click="info(item)" class="more-info-btn">{{ $t('xapp.orders.info') }}</a>
-                            <!-- <a @click="cancel(item)">{{ $t('xapp.orders.cancel') }}</a> -->
-                        </div>
+                            <a v-if="false" @click="cancel(item)">{{ $t('xapp.orders.cancel') }}</a>
+                        </div> -->
+                    
                     </div>
                 </template>
             </div>
@@ -82,17 +96,13 @@
 </template>
 
 <script>
-// import { parseOrderbookChanges } from 'ripple-lib-transactionparser'
-// import { TxMutationParser } from 'tx-mutation-parser'
-
 import xapp from '../plugins/xapp'
-import { currencyFormat, currencyCodeFormat, epochToDate } from '../plugins/number-format'
+import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat } from '../plugins/number-format'
 
-import Spinner from '@/components/Spinner.vue'
 import SpinnerButton from '@/components/SpinnerButton.vue'
 
 export default {
-    components: { Spinner, SpinnerButton },
+    components: { SpinnerButton },
     data() {
         return {
             activeTabIndex: 0,
@@ -107,7 +117,10 @@ export default {
             return this.$store.getters.getCurrencyPair
         },
         offers() { 
-            return this.$store.getters.getOffers
+            return this.$store.getters.getOpenOffers
+        },
+        history() {
+            return this.$store.getters.getOfferHistoryByCurrencyPair(this.tradingPair)
         }
     },
     watch: {
@@ -116,6 +129,34 @@ export default {
         }
     },
     methods: {
+        QuantityFormat(value, currency) {
+            if(currency === 'XRP') value = Number(value / 1_000_000)
+            return quantityFormat(value)
+        },
+        round(value, decimals) {
+            value = Number(value)
+            if(value < 1) return value.toPrecision(decimals)
+            const integerLength = (value.toFixed(0)).length
+            return value.toPrecision(decimals + integerLength)
+            // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
+        },
+        maxDecimals(float) {
+            const value = Math.trunc(float)
+            const length = value.toString().length
+            if(length > 1) {
+                return 2
+            } else {
+                if(value < 1) {
+                    return 4
+                } else {
+                    return 3
+                }
+            }
+        },
+        priceFormat(value) {
+            const precision = this.maxDecimals(value)
+            return this.round(value, precision)
+        },
         currencyCodeFormat(string, maxLength) {
             return currencyCodeFormat(string, maxLength)
         },
@@ -133,7 +174,7 @@ export default {
                 const payload = {
                     txjson: {
                         TransactionType: "OfferCancel",
-                        OfferSequence: order.seq || order.Sequence,
+                        OfferSequence: order.seq || order.sequence,
                         Account: this.account
                     }
                 }
@@ -150,7 +191,8 @@ export default {
             }
         },
         async info(order) {
-            const txId = order.PreviousTxnID || order.hash || order.Sequence
+            // const txId = order.PreviousTxnID || order.hash || order.Sequence
+            const txId = order.open.hash
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
@@ -186,17 +228,8 @@ export default {
             } else {
                 return 0
             }
-            if(this.tradingPair.base.currency === 'XRP') price = price * 1_000_000
             return price
         },
-        // getOrderQuantity(order) {
-        //     const trade = this.getOrderTrade(order)
-        //     if (trade === 'buy') {
-        //         return order.TakerGets.value
-        //     } else {
-        //         return order.TakerPays.value
-        //     }
-        // }
         async setOpenOffers() {
             try {
                 if(xapp.getAccountData() === null) throw { msg: 'Account not activated', error: false}
@@ -239,27 +272,6 @@ export default {
         //             return // alert(tx.engine_result)
         //         }
 
-        //         const tfImmediateOrCancel = 0x00020000
-        //         const tfFillOrKill = 0x00040000
-        //         if((tx.transaction.Flags & tfImmediateOrCancel) == tfImmediateOrCancel) {
-        //             // Todo get the amount that is filled and show in notification (Always succesfull but amount can be 0)
-        //             this.$notify({
-        //                 title: 'Immediate Or Cancel TX',
-        //                 text: `Some info about the TX: ${tx.engine_result}`,
-        //                 type: 'success'
-        //             })
-        //             return
-        //         }
-        //         if((tx.transaction.Flags & tfFillOrKill) == tfFillOrKill) {
-        //             // Successfull Fill or Kill, the entire amount is filled and not killed message
-        //             this.$notify({
-        //                 title: 'Fill Or Kill TX',
-        //                 text: `Some info about the TX: ${tx.engine_result}`,
-        //                 type: 'success'
-        //             })
-        //             return
-        //         }
-
         //         const offer = this.returnOffer(tx.transaction)
         //         this.offers.unshift(offer)
 
@@ -298,6 +310,9 @@ export default {
 </script>
 
 <style scoped>
+.number {
+    font-size: 0.8rem;
+}
 #offers {
     /* height: 100%; */
     /* display: flex;

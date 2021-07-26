@@ -1,33 +1,36 @@
 <template>
-    <table id="orderbook">
-        <tr>
-            <th class="price">{{ $t('xapp.order_book.price') }}</th>
-            <th class="quantity">{{ $t('xapp.order_book.quantity') }}</th>
-        </tr>
-        <tr v-for="order in orders.sell">
-            <td class="price sell number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
-            <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
-        </tr>
-        <tr>
-            <td class="number" style="width: 100%" colspan="2">
-                <div id="market-row">
-                    <span id="market-price" :class="{'buy': trend, 'sell': !trend}" @click="emitPrice(marketPrice)">
-                        <fa class="market-price-trend-svg" size="xs" v-if="trend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ NumberFormat(marketPrice) }}
-                    </span>
-                    <!-- <span class="spread">{{ formattedSpread }}Δ</span> -->
-                </div>
-            </td>
-        </tr>
-        <tr v-for="order in orders.buy">
-            <td class="price buy number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
-            <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
-        </tr>
-    </table>
+    <div class="container">
+        <table id="orderbook">
+            <tr>
+                <th class="price">{{ $t('xapp.order_book.price') }}</th>
+                <th class="quantity">{{ $t('xapp.order_book.quantity') }}</th>
+            </tr>
+            <tr v-for="order in orders.sell">
+                <td class="price sell number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
+                <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
+            </tr>
+            <tr>
+                <td class="number" style="width: 100%" colspan="2">
+                    <div id="market-row">
+                        <span id="market-price" :class="{'buy': trend, 'sell': !trend}" @click="emitPrice(marketPrice)">
+                            <fa class="market-price-trend-svg" size="xs" v-if="trend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ NumberFormat(marketPrice) }}
+                        </span>
+                        <!-- <span class="spread">{{ formattedSpread }}Δ</span> -->
+                    </div>
+                </td>
+            </tr>
+            <tr v-for="order in orders.buy">
+                <td class="price buy number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
+                <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
+            </tr>
+        </table>
+    </div>
 </template>
 
 <script>
 import { LiquidityCheck } from 'xrpl-orderbook-reader'
 import client from '../plugins/ws-client'
+import { quantityFormat } from '../plugins/number-format'
 
 export default {
     data() {
@@ -70,11 +73,7 @@ export default {
     },
     methods: {
         QuantityFormat(value) {
-            if(value < 1 && value > 0) {
-                if(parseFloat(value) < 0.01) {
-                    return parseFloat(value).toFixed(3)
-                } else return parseFloat(value).toFixed(2)
-            } else return this.NumberFormat(Math.floor(value))
+            return quantityFormat(value)
         },
         NumberFormat(value) {
             const str = value.toString().split('.', 2)

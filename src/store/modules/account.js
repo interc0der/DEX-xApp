@@ -9,37 +9,18 @@ const state = {
 }
 
 const getters = {
-    getOfferHistory: state => {
-        const data = {}
-
-        state.accountObjects.forEach(object => {
-            if(object.LedgerEntryType === 'Offer') {
-                if(object.TakerGets.currency === undefined) {
-                    object.TakerGets = {
-                        currency: 'XRP',
-                        value: object.TakerGets
-                    }
-                }
-                if(object.TakerPays.currency === undefined) {
-                    object.TakerPays = {
-                        currency: 'XRP',
-                        value: offer.TakerPays
-                    }
-                }
-                data[object.Sequence] = object
-            }
-        })
-
-        state.accountTransactions.forEach(transaction => {
+    getCreatedOffersSequenceArray: state => {
+        const createdOffersArray = []
+        state.accountTransactions.forEach(transactions => {
             const tx = transaction.tx
             switch(tx.TransactionType) {
                 case 'OfferCreate':
-                    break
-                case 'OfferCancel':
-                    break
+                    createdOffersArray.push()
+                    return true
+                default:
+                    return false
             }
         })
-
     },
     hasAccountErrors: state => {
         if(typeof state.accountInfo === 'string') return true
@@ -117,7 +98,8 @@ const actions = {
         
         const res = await xrpl.send({
             command: 'account_objects',
-            account: context.state.address
+            account: context.state.address,
+            type: 'offer'
         })
 
         // Dispatch action to set offers
@@ -125,13 +107,17 @@ const actions = {
         return context.commit('setAccountObjects', res.account_objects)
     },
     setAccountTransactions: async (context) => {
-        if(context.getters.hasAccountErrors) return context.commit('setAccountTransactions', [])
+        if(context.getters.hasAccountErrors) {
+            context.dispatch('setOfferHistory', [])
+            return context.commit('setAccountTransactions', [])
+        }
 
         const res = await xrpl.send({
             command: 'account_tx',
             account: context.state.address
         })
         context.commit('setAccountTransactions', res.transactions)
+        context.dispatch('setOfferHistory', res.transactions)
     },
     parseTx: (context, tx) => {
         console.log(tx)

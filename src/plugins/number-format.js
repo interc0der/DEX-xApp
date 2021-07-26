@@ -46,11 +46,42 @@ const currencyCodeFormat = (string, maxLength) => {
 const epochToDate = (epoch) => {
     let date = new Date('2000-01-01T00:00:00Z')
     date.setUTCSeconds(epoch)
-    return date
+
+    const day = date.getDate()
+    const month = date.getMonth() + 1
+    const year = date.getFullYear()
+
+    const hour = date.getHours()
+    const minutes = date.getMinutes()
+    const seconds = date.getSeconds()
+
+    const makeDouble = (value) => {
+        value = value.toString()
+        if(value.length === 1) return '0' + value
+        return value
+    }
+    return `${year}-${makeDouble(month)}-${makeDouble(day)} ${makeDouble(hour)}:${makeDouble(minutes)}:${makeDouble(seconds)}`
+}
+
+const thousandSeperators = (value) => {
+    const str = value.toString().split('.', 2)
+    const int = str[0] || '0'
+    const frac = str[1] || ''
+
+    return int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (str[1] ? '.' + frac : '')
+}
+
+const quantityFormat = (value) => {
+    if(value < 1 && value > 0) {
+        if(parseFloat(value) < 0.01) {
+            return parseFloat(value).toFixed(3)
+        } else return parseFloat(value).toFixed(2)
+    } else return thousandSeperators(Math.floor(value))
 }
 
 export {
     currencyFormat,
     currencyCodeFormat,
-    epochToDate
+    epochToDate,
+    quantityFormat
 }
