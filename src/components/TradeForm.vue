@@ -1,7 +1,7 @@
 <template>
-    <div class="column">
+    <div class="trade-form-container">
         <div class="column">
-            <div class="row">
+            <div id="direction-toggle-row">
                 <a @click="toggleDirection('buy')" :class="direction === 'buy' ? 'btn-success' : 'btn-secondary'" class="btn label">{{ $t('xapp.trade.buy') }}</a>
                 <a @click="toggleDirection('sell')" :class="direction === 'sell' ? 'btn-cancel' : 'btn-secondary'" class="btn label">{{ $t('xapp.trade.sell') }}</a>
             </div>
@@ -48,8 +48,8 @@
             </div>
         </div>
         <div class="row">
-            <SpinnerButton v-if="$store.getters.hasAccountErrors" @click="signin()" class="btn btn-warning btn-0-margin">{{ $t('xapp.button.account_not_found_login_button') }} ({{ $store.getters.getAccountInfo }})</SpinnerButton>
-            <SpinnerButton v-else @click="order()" :class="{'btn-success': direction === 'buy', 'btn-cancel': direction === 'sell' }" class="btn btn-0-margin">{{ direction === 'buy' ? $t('xapp.trade.buy') : $t('xapp.trade.sell') }}</SpinnerButton>
+            <SpinnerButton v-if="$store.getters.hasAccountErrors" @click="signin()" class="btn btn-warning">{{ $t('xapp.button.account_not_found_login_button') }} ({{ $store.getters.getAccountInfo }})</SpinnerButton>
+            <SpinnerButton v-else @click="order()" :class="{'btn-success': direction === 'buy', 'btn-cancel': direction === 'sell' }" class="btn">{{ direction === 'buy' ? $t('xapp.trade.buy') : $t('xapp.trade.sell') }} {{ currencyCodeFormat(tradingPair.base.currency, 4) }}</SpinnerButton>
         </div>
         <div class="row margin-input" v-if="method !== 'market'">
             <select class="arrow" v-model="type">
@@ -421,5 +421,23 @@ export default {
 </script>
 
 <style scoped>
-
+.trade-form-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: auto;
+}
+#direction-toggle-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px 0;
+}
+.btn.label {
+    width: calc(50% - 8px);
+    height: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
 </style>

@@ -1,5 +1,5 @@
 <template>
-    <div class="row header padding">
+    <!-- <div class="row header padding">
         <h6>
             <span class="dot" :style="{ 'background-color': online ? 'green' : 'red' }"></span>
             {{ account }}
@@ -7,18 +7,21 @@
         <SpinnerButton @click.prevent="signin()" style="margin-left: auto;">
             <fa :icon="['fas', 'sign-in-alt']"/>
         </SpinnerButton>
-    </div>
+    </div> -->
     <div class="row header" style="margin-top: 0;">
-        <!-- <div class="column">
-            <div class="row">
-                <a @click="toggleDirection('buy')" :class="direction === 'buy' ? 'btn-success' : 'btn-secondary'" class="btn label">{{ $t('xapp.trade.buy') }}</a>
-                <a @click="toggleDirection('sell')" :class="direction === 'sell' ? 'btn-cancel' : 'btn-secondary'" class="btn label">{{ $t('xapp.trade.sell') }}</a>
-            </div>
-        </div> -->
         <div class="column">
             <a @click="selectActive = true" id="currency-pair-select-btn">{{ currencyCodeFormat(currencyPair.base.currency) }}/{{ currencyCodeFormat(currencyPair.quote.currency) }}
                 <fa size="xs" :icon="['fas', 'chevron-down']"/>
             </a>
+        </div>
+        <div class="account-selector">
+            <label class="number">
+                <span class="dot" :style="{ 'background-color': online ? 'green' : 'red' }"></span>
+                {{ account }}
+            </label>
+            <SpinnerButton @click.prevent="signin()" style="font-size: 1rem;">
+                <fa :icon="['fas', 'sign-in-alt']"/>
+            </SpinnerButton>
         </div>
     </div>
     <Select v-show="selectActive" @close="selectActive = false"/>
@@ -123,5 +126,17 @@ export default {
     font-weight: 600;
     text-align: start;
     padding: 5px 10px;
+}
+.account-selector {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    color: var(--var-txt-color);
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-right: 5px;
+}
+.account-selector label {
+    margin-right: 5px;
 }
 </style>

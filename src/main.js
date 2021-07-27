@@ -3,12 +3,12 @@ import App from './App.vue'
 import store from './store'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faArrowLeft, faArrowRight, faArrowDown, faSignInAlt, faTimesCircle, faExclamationCircle, faArrowUp, faTimes, faCaretRight, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faArrowRight, faArrowDown, faSignInAlt, faTimesCircle, faExclamationCircle, faArrowUp, faTimes, faCaretRight, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import Notifications from '@kyvg/vue3-notification'
 
-library.add(faArrowLeft, faArrowRight, faArrowUp, faArrowDown, faSignInAlt, faTimesCircle, faTimes, faExclamationCircle, faCaretRight, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar)
+library.add(faArrowLeft, faArrowRight, faArrowUp, faArrowDown, faSignInAlt, faTimesCircle, faTimes, faExclamationCircle, faCaretRight, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory)
 
 const app = createApp(App)
 

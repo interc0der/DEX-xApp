@@ -2,7 +2,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
   <div id="view">
         <Test v-if="!init" @passed="completedTest" />
-        <Trade v-else-if="ready" />
+        <Controller v-else-if="ready" />
         <Modal />
         <!-- <Alert /> -->
         <div v-if="error" class="column h-100">
@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import Trade from '@/views/Trade.vue'
+import Controller from '@/views/Controller.vue'
 // import Alert from '@/components/Alert.vue'
 import Modal from '@/components/Modal.vue'
 import Test from '@/components/Test.vue'
@@ -27,10 +27,10 @@ import client from './plugins/ws-client'
 export default {
 	name: 'App',
 	components: {
-		Trade,
         // Alert,
         Modal,
-        Test
+        Test,
+        Controller
 	},
 	data() {
 		return {
@@ -115,15 +115,37 @@ export default {
 @import URL('https://use.typekit.net/rav4uns.css');
 
 :root {
-    --var-primary: rgb(214, 145, 26);
+    /* MOONLIGHT #181A21 */
+    --var-primary: rgba(255, 159, 10);
     --var-bg-color: black;
     --var-txt-color: white;
     --var-secondary: rgb(48, 48, 48);
-    --green: green;
-    --red: red;
-    --var-orange: orange;
-    --var-border: white;
-    --var-backdrop: 255, 255, 255
+    --var-border: rgb(39, 39, 39);
+    --var-backdrop: 255, 255, 255;
+
+    /* Dark */
+    --blue: rgba(10, 132, 255);
+    --green: rgba(48, 209, 88);
+    --red: rgba(255, 69, 58);
+    --orange: rgba(255, 159, 10);
+    --grey: rgba(142, 142, 147);
+    --grey2: rgba(99, 99, 102);
+    --grey3: rgba(72, 72, 74);
+    --grey4: rgba(58, 58, 60);
+    --grey5: rgba(44, 44, 46);
+    --grey6: rgba(28, 28, 30);
+
+    /* Light */
+    /* --blue: rgba(0, 122, 255);
+    --green: rgba(52, 199, 89);
+    --orange: rgba(255, 149, 0);
+    --red: rgb(255, 59, 48);
+    --grey: rgba(142, 142, 147);
+    --grey2: rgba(174, 174, 178);
+    --grey3: rgba(199, 199, 204);
+    --grey4: rgba(209, 209, 214);
+    --grey5: rgba(229, 229, 234);
+    --grey6: rgba(242, 242, 247); */
 }
 
 html, body {
@@ -144,10 +166,8 @@ html, body {
 #view {
     height: 100%;
     overflow: hidden;
-    /* background-color: rgba(var(--var-bg-color)); */
-    /* color: var(--var-txt-color); */
-	background-color: black;
-	color: white;
+    background-color: var(--var-bg-color);
+    color: var(--var-txt-color);
     user-select: none;
 }
 #failed-start {
@@ -183,12 +203,16 @@ html, body {
     margin: 0 !important;
 }
 .btn {
-    padding: 10px 5px;
-    border-radius: 10px;
-    width: calc(100% - 30px);
-    margin: 0 10px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 35px;
+    border-radius: 5px;
+    width: 100%;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 600;
+    font-size: 1rem;
     text-align: center;
     color: var(--var-white);
 }
@@ -249,10 +273,6 @@ hr {
     border-top: 1px solid var(--var-border);
     width: 100%;
 }
-hr.divide {
-    border: 1px solid black;
-    width: 110%;
-}
 .container {
     display: flex;
     flex-direction: column;
@@ -260,24 +280,18 @@ hr.divide {
     height: 100%;
     align-items: center;
 }
-.btn.btn-secondary {
+.btn-secondary {
     background-color: var(--var-secondary) !important;
     color: grey !important;
 }
-.btn.btn-success {
+.btn-success {
     background-color: var(--green);
-    /* background-color: green; */
 }
-.btn.btn-cancel {
+.btn-cancel {
     background-color: var(--red);
-    /* background-color: red; */
 }
-.btn.btn-warning {
-    background-color: var(--var-orange);
-}
-.btn.label {
-    padding: 5px !important;
-    border-radius: 15px !important;
+.btn-warning {
+    background-color: var(--orange);
 }
 .header {
     margin: 0 10px;
@@ -292,9 +306,9 @@ hr.divide {
     width: 100%;
     text-align: center;
     padding: 0 10px;
-    height: 38px;
+    height: 30px;
     font-size: 1rem;
-    border-radius: 10px;
+    border-radius: 5px;
     border: 1px solid var(--var-border);
     position: relative;
     display: flex;
@@ -339,9 +353,9 @@ select {
     color: var(--var-txt-color);
     background-color: var(--var-bg-color);
     padding: 0 10px;
-    height: 30px;
+    height: 28px;
     font-size: 0.8rem;
-    border-radius: 10px;
+    border-radius: 5px;
     border: 1px solid var(--var-border);
 }
 select.arrow {

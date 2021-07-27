@@ -1,8 +1,14 @@
 <template>
     <div id="offers" class="column">
         <div class="tab-head row">
-            <span @click="activeTabIndex = 0">{{ $t('xapp.orders.orders') }} ({{ Object.keys(offers).length }})</span>
-            <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span>
+            <div class="tabs">
+                <span @click="activeTabIndex = 0">{{ $t('xapp.orders.orders') }} ({{ Object.keys(offers).length }})</span>
+                <!-- <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span> -->
+            </div>
+            <a @click="openEventView()">
+                <fa style="margin-right: 5px;" :icon="['fas', 'history']"/>
+                <label>{{ $t('xapp.orders.history') }}</label>
+            </a>
         </div>
         <hr>
         <div v-if="offers.length < 1 && activeTabIndex === 0" id="no-data-placeholder">
@@ -26,11 +32,11 @@
 
                         <div class="row" style="padding: 5px 0 5px 15px;">
                             <div v-if="tradingPair.base.currency === item.created.TakerGets.currency || tradingPair.quote.currency === item.created.TakerPays.currency" class="column">
-                                <h6>{{ `filled/total (${currencyCodeFormat(item.created.TakerGets.currency, 16)})` }}</h6>
+                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.created.TakerGets.currency, 16)})` }}</h6>
                                 <span class="number">{{ `${QuantityFormat(item.TakerGetsFilled, item.open.TakerGets.currency)}/${QuantityFormat(item.created.TakerGets.value, item.open.TakerGets.currency)}` }}</span>
                             </div>
                             <div v-else-if="tradingPair.base.currency === item.created.TakerPays.currency || tradingPair.quote.currency === item.created.TakerGets.currency" class="column">
-                                <h6>{{ `filled/total (${currencyCodeFormat(item.created.TakerPays.currency, 16)})` }}</h6>
+                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.created.TakerPays.currency, 16)})` }}</h6>
                                 <span class="number">{{ `${QuantityFormat(item.TakerPaysFilled, item.open.TakerPays.currency)}/${QuantityFormat(item.created.TakerPays.value, item.open.TakerPays.currency)}` }}</span>
                             </div>
                             <div v-else class="column">
@@ -44,7 +50,8 @@
                             </div>
                         </div>
                         <div class="action-row">
-                            <a @click="info(item)" class="more-info-btn">{{ $t('xapp.orders.info') }}</a>
+                            <a @click="info(item)">{{ $t('xapp.orders.info') }}</a>
+                            <hr>
                             <SpinnerButton @click.prevent="cancel(item)">{{ $t('xapp.orders.cancel') }}</SpinnerButton>
                         </div>
 
@@ -52,43 +59,7 @@
                 </template>
 
                 <template v-else-if="activeTabIndex === 1">
-                    <div class="order-item" v-for="(item, index) in history">
-                        <div class="row">
-                            {{ currencyCodeFormat(item.created.TakerGets.currency, 16) }}
-                            ->
-                            {{ currencyCodeFormat(item.created.TakerPays.currency, 16) }}
-                        </div>
-                        <div class="row" style="margin: 0; padding-left: 5px;">
-                            <label v-if="getOrderTrade(item.created)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label>
-                            <label class="trade-label open">{{ item.status }}</label>
-                            <label class="trade-label open">{{ item.condition }}</label>
-                        </div>
-
-                        <div class="row">
-                            <span class="number">#{{ item.sequence }}</span>
-                            <span class="number" style="margin-left: auto; margin-right: 10px;">{{ epochToDate(item.created.date) }}</span>
-                        </div>
-                        <!-- <div class="row" style="padding: 5px 0 5px 15px;">
-                            <div class="column">
-                                <h6>{{ `${$t('xapp.orders.pay')} (${currencyCodeFormat(item.TakerGets.currency, 16)})`}}</h6>
-                                <span class="number">{{ `${currencyFormat(item.TakerGets.value, item.TakerGets.currency)}` }}</span>
-                            </div>
-                            <div class="column">
-                                <h6>{{ `${$t('xapp.orders.get')} (${currencyCodeFormat(item.TakerPays.currency, 16)})` }}</h6>
-                                <span class="number">{{ `${currencyFormat(item.TakerPays.value, item.TakerPays.currency)}` }}</span>
-                            </div>
-                            <div class="column">
-                                <h6>Price HC</h6>
-                                <span v-if="getOrderTrade(item)" class="number">{{ currencyFormat(getOrderPrice(item), tradingPair.base.currency) }}</span>
-                                <span v-else>--</span>
-                            </div>
-                        </div>
-                        <div class="action-row">
-                            <a @click="info(item)" class="more-info-btn">{{ $t('xapp.orders.info') }}</a>
-                            <a v-if="false" @click="cancel(item)">{{ $t('xapp.orders.cancel') }}</a>
-                        </div> -->
-                    
-                    </div>
+                    Not available
                 </template>
             </div>
         </div>
@@ -129,6 +100,9 @@ export default {
         }
     },
     methods: {
+        openEventView() {
+            this.$emitter.emit('changeView', 'events')
+        },
         QuantityFormat(value, currency) {
             if(currency === 'XRP') value = Number(value / 1_000_000)
             return quantityFormat(value)
@@ -245,66 +219,6 @@ export default {
                 }
             }
         }
-    },
-    mounted() {
-        // this.setOpenOffers()
-
-        // this.$emitter.on('account_change', () => {
-        //     this.setOpenOffers()
-        // })
-        // this.$rippled.on('transaction', tx => {
-        //     if(tx.transaction.TransactionType === 'OfferCreate') {
-                
-        //         console.log('parsing...')
-        //         // const parsed = TxMutationParser(this.account, tx)
-        //         const parsed = parseOrderbookChanges(tx.meta)
-        //         console.log(parsed)
-        //         console.log('result')
-                
-        //         if (tx.engine_result !== 'tesSUCCESS') {
-        //             // Todo show all messages on the possible errors
-        //             // tecKilled etc...
-        //             this.$notify({
-        //                 title: 'Transacion error HC',
-        //                 text: `Some info about the TX: ${tx.engine_result}`,
-        //                 type: 'error'
-        //             })
-        //             return // alert(tx.engine_result)
-        //         }
-
-        //         const offer = this.returnOffer(tx.transaction)
-        //         this.offers.unshift(offer)
-
-        //         const offerData = parsed[this.account][0]
-        //         this.$notify({
-        //             title: 'New Order',
-        //             text: `${this.$xapp.currencyFormat(offerData.totalPrice.value, offerData.totalPrice.currency)}${this.$xapp.currencyCodeFormat(offerData.totalPrice.currency, 4)} Exchanged for ${this.$xapp.currencyFormat(offerData.quantity.value, offerData.quantity.currency)}${this.$xapp.currencyCodeFormat(offerData.quantity.currency, 4)}`,
-        //             type: 'success'
-        //         })
-        //     } else if(tx.transaction.TransactionType === 'OfferCancel') {
-        //         if (tx.engine_result !== 'tesSUCCESS') {
-        //             // Todo
-        //             this.$notify({
-        //                 title: 'Error in canceling order',
-        //                 text: `Result code: ${tx.engine_result}`,
-        //                 type: 'error'
-        //             })
-        //             return
-        //         }
-
-        //         // tx.transaction.OfferSequence !== offer.seq
-        //         this.offers = this.offers.filter(offer => {
-        //             if(tx.transaction.OfferSequence === offer.Sequence) {
-        //                 this.$notify({
-        //                     title: `Canceled order #${tx.transaction.OfferSequence}`,
-        //                     text: `Pay: ${this.$xapp.currencyFormat(offer.TakerGets.value, offer.TakerGets.currency)}${this.$xapp.currencyCodeFormat(offer.TakerGets.currency, 4)} Get: ${this.$xapp.currencyFormat(offer.TakerPays.value, offer.TakerPays.currency)}${this.$xapp.currencyCodeFormat(offer.TakerPays.currency, 4)}`,
-        //                     type: 'success'
-        //                 })
-        //                 return false
-        //             } else return true
-        //         })
-        //     }
-        // })
     }
 }
 </script>
@@ -324,7 +238,20 @@ export default {
 .tab-head {
     display: flex;
     flex-direction: row;
-    padding: 5px 10px;
+}
+.tab-head .tabs {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-left: 15px;
+}
+.tab-head a {
+    margin-left: auto;
+    margin-right: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
 }
 .table-wrapper {
     display: flex;
@@ -364,11 +291,13 @@ export default {
 .action-row a {
     width: 50%;
     background-color: var(--var-secondary);
-    padding: 10px 0;
+    padding: 6px 0;
     text-align: center;
 }
-.more-info-btn {
-    border-right: 1px white solid;
+.action-row hr {
+    width: 1px;
+    border-top: none;
+    margin: 0;
 }
 .trade-label {
     padding: 3px 8px;

@@ -1,9 +1,13 @@
 <template>
     <div id="history-container">
         <div id="history-header">
-            <fa class="header-icon" :icon="['fas', 'chevron-left']" />
+            <a @click="openTradeView()">
+                <fa class="header-icon" :icon="['fas', 'chevron-left']" />
+            </a>
             <h2>Events</h2>
-            <fa class="header-icon" :icon="['fas', 'calendar']" />
+            <a>
+                <fa class="header-icon" :icon="['fas', 'calendar']" />
+            </a>
         </div>
         <div class="tabs-row">
             <label>
@@ -17,7 +21,7 @@
             </label>
         </div>
         <div class="tab-container">
-            <template v-if="activeTab === 2">
+            <template v-if="activeTab">
                 <div class="filters row">
                     <select class="arrow" v-model="selectedCurrency">
                         <option value="All">All</option>
@@ -35,13 +39,13 @@
                 <hr style="margin: 10px 0; border: none;">
 
                 <!-- Content -->
-                <div v-if="filterHistoryByCurrency.length < 1">
+                <div v-if="listItems.length < 1">
                     <i>🚀</i>
                     <h4>{{ $t('xapp.orders.no_history_orders') }}</h4>
                 </div>
 
                 <div class="list-container">
-                    <div class="order-card" v-for="(item, index) in filterHistoryByCurrency">
+                    <div class="order-card" v-for="(item, index) in listItems">
                         <div class="order-item">
                             <div class="row">
                                 <div class="currency-pair">
@@ -126,7 +130,7 @@ export default {
         history() {
             return this.$store.getters.getOfferHistory
         },
-        filterHistoryByCurrency() {
+        historyList() {
             if(this.selectedCurrency === 'All') return this.history
             
             const array = this.history.filter(offer => {
@@ -136,9 +140,32 @@ export default {
                     else return false
                 })
             return array.sort((a, b) =>  b.sequence - a.sequence )
+        },
+        openOrderList() {
+            const array = this.history.filter(offer => {
+                if(offer.status !== 'open') return false
+                if(this.selectedCurrency === 'All') return true
+
+                const gets = offer.created.TakerGets
+                const pays = offer.created.TakerPays
+                if(gets.currency === this.selectedCurrency || pays.currency === this.selectedCurrency) return true
+                else return false
+            })
+            return array.sort((a, b) =>  b.sequence - a.sequence )
+        },
+        listItems() {
+            switch(this.activeTab) {
+                case 1:
+                    return this.openOrderList
+                case 2:
+                    return this.historyList
+            }
         }
     },
     methods: {
+        openTradeView() {
+            this.$emitter.emit('changeView', 'trade')
+        },
         currencyCodeFormat(string, maxLength) {
             return currencyCodeFormat(string, maxLength)
         },
@@ -206,7 +233,7 @@ export default {
             }
         },
         async info(order) {
-            const txId = order.status === 'open' ? order.open.hash : order.canceled.hash
+            const txId = (order.status === 'open' ? order.open.hash : (order.canceled?.hash || order.created?.hash) )
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
@@ -235,14 +262,14 @@ h5 {
     margin: 5px 0;
     font-size: 0.8rem;
     font-weight: 600;
-    color: rgb(167, 167, 167);
+    color: var(--grey);
     display: flex;
 }
 h5 span {
     margin-left: auto;
 }
 h5 .number {
-    color: white;
+    color: var(--var-txt-color);
     margin-top: auto;
     margin-bottom: auto;
 }
@@ -250,7 +277,7 @@ select {
     width: fit-content;
     padding-right: 30px;
     margin-right: 15px;
-    border: 1px solid rgba(128, 128, 128, 0.5);;
+    border: 1px solid var(--var-border)
 }
 #history-container {
     display: flex;
@@ -264,8 +291,12 @@ select {
     justify-content: space-between;
     padding: 10px 0;
 }
+#history-header a {
+    width: 30px;
+    display: flex;
+}
 .header-icon {
-    margin: auto 0;
+    margin: auto;
 }
 .tab-container {
     overflow: hidden;
@@ -278,7 +309,7 @@ select {
 }
 .order-card {
     border-radius: 10px;
-    background-color: rgb(24, 24, 24);
+    background-color: var(--grey5);
     margin-bottom: 30px;
 }
 .order-item {
@@ -292,45 +323,46 @@ select {
 .order-item hr {
     width: calc(100% + 20px);
     /* margin-left: -10px; */
-    border-top: 1px solid rgba(128, 128, 128, 0.377); 
+    border-top: 1px solid var(--var-border); 
     margin: 8px 0 5px -10px;
 }
 .order-item h6 {
     color: rgb(110, 110, 110);
 }
 .trade-label {
-    padding: 3px 8px;
+    padding: 0 8px;
+    height: 18px;
     font-size: 0.7rem;
     border-radius: 5px 0px 5px 0px;
     font-weight: 400;
     margin-right: 5px;
+    display: flex;
+    align-items: center;
 }
 .trade-label.active {
     margin-top: -1px;
     color: white;
-    border: 1px solid green;
-    background-color: rgba(0, 128, 0, 0.356);
+    border: 1px solid var(--green);
+    background-color: rgba(0, 128, 0, 0.35);
 }
 .action-row {
     display: flex;
     flex-direction: row;
     width: 100%;
-    border-top: 1px solid grey;
+    /* border-top: 1px solid var(--var-border); */
     max-height: 40px;
 }
 .action-row a {
     width: 50%;
-    background-color: var(--var-secondary);
+    background-color: var(--grey3);
     padding: 10px 0;
     text-align: center;
 }
 .action-row hr {
     width: 1px;
     border-top: none;
-    border-left: 1px solid white;
     margin: 0;
 }
-
 .tabs-row {
     height: 30px;
     overflow-x: auto;
@@ -338,9 +370,6 @@ select {
 }
 .tabs-row input {
     display: none;
-    /* position: fixed;
-    opacity: 0;
-    pointer-events: none; */
 }
 .tabs-row label {
     display: inline-block;
@@ -348,12 +377,12 @@ select {
     cursor: pointer;
 }
 .tabs-row input:checked + span {
-    color: rgb(255, 255, 255);
+    color: var(--var-txt-color);
     border-bottom: 1px solid var(--var-primary);
     transition: 0.5s ease;
 }
 .tabs-row input + span {
-    color: rgb(170, 170, 170);
+    color: var(--grey);
     transition: 0.5s ease;
 }
 </style>

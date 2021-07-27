@@ -82,7 +82,7 @@ const actions = {
                         sequence: offer.Sequence,
                         condition: getCondition(originalTx.Flags),
                         open: {
-                            hash: offer.BookDirectory,
+                            hash: offer.PreviousTxnID,
                             TakerGets: typeof offer.TakerGets === 'string' ? { currency: 'XRP', value: offer.TakerGets } : offer.TakerGets,
                             TakerPays: typeof offer.TakerPays === 'string' ? { currency: 'XRP', value: offer.TakerPays } : offer.TakerPays
                         },
@@ -170,7 +170,64 @@ const actions = {
         })
     },
     parseTx: (context, tx) => {
+        // this.setOpenOffers()
 
+        // this.$emitter.on('account_change', () => {
+        //     this.setOpenOffers()
+        // })
+        // this.$rippled.on('transaction', tx => {
+        //     if(tx.transaction.TransactionType === 'OfferCreate') {
+                
+        //         console.log('parsing...')
+        //         // const parsed = TxMutationParser(this.account, tx)
+        //         const parsed = parseOrderbookChanges(tx.meta)
+        //         console.log(parsed)
+        //         console.log('result')
+                
+        //         if (tx.engine_result !== 'tesSUCCESS') {
+        //             // Todo show all messages on the possible errors
+        //             // tecKilled etc...
+        //             this.$notify({
+        //                 title: 'Transacion error HC',
+        //                 text: `Some info about the TX: ${tx.engine_result}`,
+        //                 type: 'error'
+        //             })
+        //             return // alert(tx.engine_result)
+        //         }
+
+        //         const offer = this.returnOffer(tx.transaction)
+        //         this.offers.unshift(offer)
+
+        //         const offerData = parsed[this.account][0]
+        //         this.$notify({
+        //             title: 'New Order',
+        //             text: `${this.$xapp.currencyFormat(offerData.totalPrice.value, offerData.totalPrice.currency)}${this.$xapp.currencyCodeFormat(offerData.totalPrice.currency, 4)} Exchanged for ${this.$xapp.currencyFormat(offerData.quantity.value, offerData.quantity.currency)}${this.$xapp.currencyCodeFormat(offerData.quantity.currency, 4)}`,
+        //             type: 'success'
+        //         })
+        //     } else if(tx.transaction.TransactionType === 'OfferCancel') {
+        //         if (tx.engine_result !== 'tesSUCCESS') {
+        //             // Todo
+        //             this.$notify({
+        //                 title: 'Error in canceling order',
+        //                 text: `Result code: ${tx.engine_result}`,
+        //                 type: 'error'
+        //             })
+        //             return
+        //         }
+
+        //         // tx.transaction.OfferSequence !== offer.seq
+        //         this.offers = this.offers.filter(offer => {
+        //             if(tx.transaction.OfferSequence === offer.Sequence) {
+        //                 this.$notify({
+        //                     title: `Canceled order #${tx.transaction.OfferSequence}`,
+        //                     text: `Pay: ${this.$xapp.currencyFormat(offer.TakerGets.value, offer.TakerGets.currency)}${this.$xapp.currencyCodeFormat(offer.TakerGets.currency, 4)} Get: ${this.$xapp.currencyFormat(offer.TakerPays.value, offer.TakerPays.currency)}${this.$xapp.currencyCodeFormat(offer.TakerPays.currency, 4)}`,
+        //                     type: 'success'
+        //                 })
+        //                 return false
+        //             } else return true
+        //         })
+        //     }
+        // })
     }
 }
 

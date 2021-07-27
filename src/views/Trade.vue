@@ -1,15 +1,14 @@
 <template>
-    <!-- <div class="container">
+    <div class="container">
         <TradeHeader />
         <hr>
         <div class="row padding">
             <TradeForm />
             <OrderBook />
         </div>
-        <hr class="divide">
+        <hr class="spacer">
         <TradeData />
-    </div> -->
-    <Events/>
+    </div>
 </template>
 
 <script>
@@ -18,9 +17,15 @@ import OrderBook from '@/components/OrderBook.vue'
 import TradeHeader from '@/components/TradeHeader.vue'
 import TradeForm from '@/components/TradeForm.vue'
 
-import Events from '@/views/Events.vue'
-
 export default {
-    components: { TradeData, OrderBook, TradeHeader, TradeForm, Events }    
+    components: { TradeData, OrderBook, TradeHeader, TradeForm }    
 }
 </script>
+
+<style scoped>
+hr.spacer {
+    border: none;
+    width: 110%;
+    height: 20px;
+}
+</style>
