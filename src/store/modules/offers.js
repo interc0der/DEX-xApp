@@ -92,13 +92,7 @@ const actions = {
             
             switch(tx.TransactionType) {
                 case 'OfferCreate':
-
                     const parsed = parseOrderbookChanges(transaction.meta)
-
-                    console.log(tx.Sequence)
-                    console.log(parsed)
-
-
 
                     if(tx.Account === account) {
                         // initialOffer
@@ -162,6 +156,40 @@ const actions = {
                     break
                 case 'OfferCancel':
                     context.commit('canceledOffer', tx)
+                    break
+                case 'Payment':
+                    const parsedPayment = parseOrderbookChanges(transaction.meta)
+                    if(!parsedPayment.hasOwnProperty(account)) break
+
+                    const parsedPaymentArray = parsedPayment[account]
+                    
+                    // console.log(tx.ledger_index)
+                    // console.log(tx)
+                    // console.log(transaction.meta)
+                    // console.log(parsedPayment)
+
+                    parsedPaymentArray.forEach(mutation => {
+                        if(context.state.offers.hasOwnProperty(mutation.sequence)) {
+                            const quantity = {
+                                value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
+                                currency: mutation.quantity.currency,
+                                issuer: mutation.quantity.counterparty
+                            }
+    
+                            const totalPrice = {
+                                value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
+                                currency: mutation.totalPrice.currency,
+                                issuer: mutation.totalPrice.counterparty
+                            }
+    
+                            const offerChanges = {
+                                sequence: mutation.sequence,
+                                TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
+                                TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
+                            }
+                            context.commit('intermediateOffer', offerChanges)
+                        }
+                    })
                     break
                 default:
                     console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
