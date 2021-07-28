@@ -79,9 +79,37 @@ const quantityFormat = (value) => {
     } else return thousandSeperators(Math.floor(value))
 }
 
+const round = (value, decimals) => {
+    value = Number(value)
+    if(value < 1) return value.toPrecision(decimals)
+    const integerLength = (value.toFixed(0)).length
+    return value.toPrecision(decimals + integerLength)
+    // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
+}
+
+const maxDecimals = (float) => {
+    const value = Math.trunc(float)
+    const length = value.toString().length
+    if(length > 1) {
+        return 2
+    } else {
+        if(value < 1) {
+            return 4
+        } else {
+            return 3
+        }
+    }
+}
+
+const priceFormat = (value) => {
+    const precision = maxDecimals(value)
+    return round(value, precision)
+}
+
 export {
     currencyFormat,
     currencyCodeFormat,
     epochToDate,
-    quantityFormat
+    quantityFormat,
+    priceFormat
 }

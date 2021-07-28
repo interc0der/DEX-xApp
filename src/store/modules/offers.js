@@ -1,5 +1,4 @@
 import { parseOrderbookChanges } from 'ripple-lib-transactionparser'
-import { TxMutationParser } from 'tx-mutation-parser'
 
 import xrpl from '../../plugins/ws-client'
 
@@ -21,12 +20,10 @@ const getters = {
         const array = []
         for(const seq in state.offers) {
             const offer = state.offers[seq]
-            const gets = offer.created.TakerGets
-            const pays = offer.created.TakerPays
 
             let test = false
-            if(gets.currency === currencyPair.base.currency || gets.currency === currencyPair.quote.currency) test = true
-            if(pays.currency === currencyPair.base.currency || pays.currency === currencyPair.quote.currency) test = true
+            if(offer.TakerGets.currency === currencyPair.base.currency || offer.TakerGets.currency === currencyPair.quote.currency) test = true
+            if(offer.TakerPays.currency === currencyPair.base.currency || offer.TakerPays.currency === currencyPair.quote.currency) test = true
 
             if(!test) continue
             array.push(offer)
@@ -47,58 +44,39 @@ const getters = {
     getOfferBySequence: state => sequence => {
         if(!state.offers.hasOwnProperty(sequence)) return null
         else return state.offers[sequence]
-    },
-    getOfferFilledStatusBySequence: state => sequence => {
-        if(!state.offers.hasOwnProperty(sequence)) return null
-
     }
+}
+
+const getCondition = (tx) => {
+    const flag = tx.Flags
+    const expiration = tx.Expiration
+
+    const tfImmediateOrCancel = 0x00020000
+    const tfFillOrKill = 0x00040000
+
+    if((flag & tfImmediateOrCancel) == tfImmediateOrCancel) return 'ImmediateOrCancel'
+    else if((flag & tfFillOrKill) == tfFillOrKill) return 'FillOrKill'
+    else if(typeof expiration === 'string') return 'TimeToKill'
+    else return 'GoodTillCancel'
 }
 
 const actions = {
     setOpenOffers: async (context, objects) => {
-        context.commit('resetOffers')
+        objects.forEach(offer => {
+            context.commit('setOpenOfferObject', offer)
+        })
+        return
+        // todo Use this code if there is an offer without a created/initial tx get it until prevTx does not exsists
         try {
             const offers = await Promise.all(
                 objects.map(async offer => {
-                    // todo check if offercreate TX already excist in Account TX to get all Offers related to the OfferSequence
+
                     const originalTx = await xrpl.send({
                         command: 'tx',
                         transaction: offer.PreviousTxnID
                     })
                     // If original TX has PreviousTxnID fetch that one if there is no offfer create tx in the history
-
-                    const getCondition = (flag) => {
-                        const tfImmediateOrCancel = 0x00020000
-                        const tfFillOrKill = 0x00040000
-
-                        if(( flag & tfImmediateOrCancel) == tfImmediateOrCancel) return 'ImmediateOrCancel'
-                        else if((flag & tfFillOrKill) == tfFillOrKill) return 'FillOrKill'
-                        else if(originalTx.hasOwnProperty('Expiration')) return 'TimeToKill'
-                        else return 'GoodTillCancel'
-                    }
-
-                    const offerObject = {
-                        status: 'open',
-                        sequence: offer.Sequence,
-                        condition: getCondition(originalTx.Flags),
-                        open: {
-                            hash: offer.PreviousTxnID,
-                            TakerGets: typeof offer.TakerGets === 'string' ? { currency: 'XRP', value: offer.TakerGets } : offer.TakerGets,
-                            TakerPays: typeof offer.TakerPays === 'string' ? { currency: 'XRP', value: offer.TakerPays } : offer.TakerPays
-                        },
-                        created: {
-                            hash: originalTx.hash,
-                            date: originalTx.date,
-                            TakerGets: typeof originalTx.TakerGets === 'string' ? { currency: 'XRP', value: originalTx.TakerGets } : originalTx.TakerGets,
-                            TakerPays: typeof originalTx.TakerPays === 'string' ? { currency: 'XRP', value: originalTx.TakerPays } : originalTx.TakerPays
-                        },
-                        quality: Number(originalTx.TakerGets?.value || originalTx.TakerGets) / Number(originalTx.TakerPays?.value || originalTx.TakerPays),
-                        TakerGetsFilled: Number(originalTx.TakerGets?.value || originalTx.TakerGets) - Number(offer.TakerGets?.value || offer.TakerGets),
-                        TakerPaysFilled: Number(originalTx.TakerPays?.value || originalTx.TakerPays) - Number(offer.TakerPays?.value || offer.TakerPays),
-                        progress: [], // Todo
-                        fees: 0 // Todo
-                    }
-                    context.commit('setOffer', offerObject)
+                    const offerObject = {}
                     return offerObject
                 })
             )
@@ -107,61 +85,69 @@ const actions = {
         }
     },
     setOfferHistory: (context, txs) => {
+        const account = context.rootGetters.getAccount
+
         txs.forEach(transaction => {
             const tx = transaction.tx
             
             switch(tx.TransactionType) {
                 case 'OfferCreate':
 
-                    const getCondition = (flag, expiration) => {
-                        const tfImmediateOrCancel = 0x00020000
-                        const tfFillOrKill = 0x00040000
-        
-                        if(( flag & tfImmediateOrCancel) == tfImmediateOrCancel) return 'ImmediateOrCancel'
-                        else if((flag & tfFillOrKill) == tfFillOrKill) return 'FillOrKill'
-                        else if(typeof expiration === '') return 'TimeToKill'
-                        else return 'GoodTillCancel'
-                    }
-
-                    const offerCreatedObject = {
-                        sequence: tx.Sequence,
-                        condition: getCondition(tx.Flags, tx.Expiration),
-                        created: {
-                            meta: transaction.meta,
-                            date: tx.date,
-                            hash: tx.hash,
-                            TakerGets: typeof tx.TakerGets === 'string' ? { currency: 'XRP', value: tx.TakerGets } : tx.TakerGets,
-                            TakerPays: typeof tx.TakerPays === 'string' ? { currency: 'XRP', value: tx.TakerPays } : tx.TakerPays
-                        },
-                        fees: tx.Fee
-                    }
-                    
-                    // const parsed1 = TxMutationParser(context.rootGetters.getAccount, transaction)
-                    // console.log(parsed1)
                     const parsed = parseOrderbookChanges(transaction.meta)
+
+                    console.log(tx.Sequence)
                     console.log(parsed)
 
-                    if(offerCreatedObject.condition === 'ImmediateOrCancel' || offerCreatedObject.condition === 'FillOrKill') offerCreatedObject['status'] = 'closed'
 
-                    const offerInState = context.getters.getOfferBySequence(tx.Sequence)
-                    if(offerInState) {
-                        if(offerInState.hasOwnProperty('created')) console.log('Has created object')
-                        else context.commit('setOffer', offerCreatedObject)
-                    } else context.commit('setOffer', offerCreatedObject)
+
+                    if(tx.Account === account) {
+                        // initialOffer
+                        tx.condition = getCondition(tx)
+                        context.commit('setInitialOffer', tx)
+
+                        // parse metadata
+                        for(const address in parsed) {
+                            const array = parsed[address]
+                            
+                            array.forEach(mutation => {
+                                if(account !== address) {
+                                    const offerChanges = {
+                                        sequence: tx.Sequence,
+                                        TakerGets: {
+                                            value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value
+                                        },
+                                        TakerPays: {
+                                            value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value
+                                        }
+                                    }
+                                    context.commit('intermediateOffer', offerChanges)
+                                }
+                            })                            
+                        }
+                    } else {
+                        if(parsed.hasOwnProperty(account)) {
+                            // Balance changes for the account
+                            parsed[account].forEach(mutation => {
+                                if(context.state.offers.hasOwnProperty(mutation.sequence)) {
+                                    // If there was a mutation with another offer
+                                    // offerCreatedObject.linkedTx.push(mutation)
+                                    const offerChanges = {
+                                        sequence: mutation.sequence,
+                                        TakerGets: {
+                                            value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value
+                                        },
+                                        TakerPays: {
+                                            value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value
+                                        }
+                                    }
+                                    context.commit('intermediateOffer', offerChanges)
+                                }
+                            })
+                        }
+                    }
                     break
                 case 'OfferCancel':
-                    const offerCanceledObject = {
-                        sequence: tx.OfferSequence,
-                        status: 'closed',
-                        canceled: {
-                            meta: transaction.meta,
-                            date: tx.date,
-                            hash: tx.hash,
-                            sequence: tx.Sequence
-                        },
-                        fees: tx.Fee
-                    }
-                    context.commit('setOffer', offerCanceledObject)
+                    context.commit('canceledOffer', tx)
                     break
                 default:
                     console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
@@ -232,21 +218,138 @@ const actions = {
 }
 
 const mutations = {
-    resetOffers: (state) => {
-        state.offers = {}
-    },
-    setOffer: (state, offer) => {
+    setInitialOffer: (state, offer) => {
+        const seq = offer.Sequence
+        if(state.offers.hasOwnProperty(seq)) {
+            const offerState = state.offers[seq]
 
-        if(offer.status === 'open') state.openOfferSequences.push(offer.sequence)
-        if(!state.offers.hasOwnProperty(offer.sequence)) {
-            state.offers[offer.sequence] = offer
+            offerState.TakerGets.values.created = offer.TakerGets?.value || offer.TakerGets
+            offerState.TakerPays.values.created = offer.TakerPays?.value || offer.TakerPays
+
+            offerState.condition = getCondition(offer)
+            offerState.date.created = offer.date
+
+            offerState.fees = Number(offer.Fee) + Number(offerState.fees)
         } else {
-            const fees = Number(state.offers[offer.sequence].fees) + Number(offer.fees)
-            
-            state.offers[offer.sequence] = {...state.offers[offer.sequence], ...offer}
-            
-            state.offers[offer.sequence].fees = fees
+            const offerObject = {
+                sequence: seq,
+                condition: getCondition(offer),
+                TakerGets: {
+                    currency: offer.TakerGets?.currency || 'XRP',
+                    issuer: offer.TakerGets?.issuer || null,
+                    values: {
+                        open: 0,
+                        created: offer.TakerGets?.value || offer.TakerGets,
+                        filled: 0
+                    },
+                    price: {
+                        open: 0,
+                        created: 0
+                    }
+                },
+                TakerPays: {
+                    currency: offer.TakerPays?.currency || 'XRP',
+                    issuer: offer.TakerPays?.issuer || null,
+                    values: {
+                        open: 0,
+                        created: offer.TakerPays?.value || offer.TakerPays,
+                        filled: 0
+                    },
+                    price: {
+                        open: 0,
+                        created: 0
+                    }
+                },
+                date: {
+                    latest: 0,
+                    created: offer.date,
+                    closed: 0
+                },
+                hashes: [offer.hash],
+                fees: offer.Fee,
+                linkedOffers: []
+            }
+    
+            if(offerObject.condition === 'ImmediateOrCancel' || offerObject.condition === 'FillOrKill') offerObject['status'] = 'closed'
+    
+            state.offers[seq] = offerObject   
         }
+    },
+    setOpenOfferObject: (state, offer) => {
+        const seq = offer.Sequence
+        if(state.offers.hasOwnProperty(seq)) {
+            const offerState = state.offers[seq]
+            offerState.status = 'open'
+
+            offerState.TakerGets.values.open = offer.TakerGets?.value || offer.TakerGets
+            offerState.TakerPays.values.open = offer.TakerPays?.value || offer.TakerPays
+
+        } else {
+            const offerObject = {
+                status: 'open',
+                sequence: seq,
+                condition: 'GoodTillCancel',
+                TakerGets: {
+                    currency: offer.TakerGets?.currency || 'XRP',
+                    issuer: offer.TakerGets?.issuer || null,
+                    values: {
+                        open: offer.TakerGets?.value || offer.TakerGets,
+                        created: 0,
+                        filled: 0
+                    },
+                    price: {
+                        open: 0,
+                        created: 0
+                    }
+                },
+                TakerPays: {
+                    currency: offer.TakerPays?.currency || 'XRP',
+                    issuer: offer.TakerPays?.issuer || null,
+                    values: {
+                        open: offer.TakerPays?.value || offer.TakerPays,
+                        created: 0,
+                        filled: 0
+                    },
+                    price: {
+                        open: 0,
+                        created: 0
+                    }
+                },
+                date: {
+                    latest: 0,
+                    created: 0,
+                    closed: 0
+                    // todo: Check if also is created 
+                },
+                fees: 0,
+                hashes:[],
+                linkedOffers: []
+            }
+            state.offers[seq] = offerObject
+        }
+
+        state.openOfferSequences.push(seq)
+    },
+    intermediateOffer: (state, offer) => { 
+        const offerState = state.offers[offer.sequence]
+
+        offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Number(offer.TakerGets.value)
+        offerState.TakerPays.values.filled = Number(offerState.TakerPays.values.filled) + Number(offer.TakerPays.value)
+    },
+    canceledOffer: (state, offer) => {
+        const seq = offer.OfferSequence
+        
+        // Todo
+        if(!state.offers.hasOwnProperty(seq)) return console.log('Canceled Offer Without TX history')
+
+        const offerState = state.offers[seq]
+
+        offerState.status = 'cancelled'
+        offerState.date.closed = offer.date
+        offerState.date.latest = offer.date
+        offerState.hashes.push(offer.hash)
+
+        offerState.fees = Number(offer.Fee) + Number(offerState.fees)
     }
 }
 

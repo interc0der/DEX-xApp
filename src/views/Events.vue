@@ -49,22 +49,22 @@
                         <div class="order-item">
                             <div class="row">
                                 <div class="currency-pair">
-                                    <label>{{ currencyCodeFormat(item.created.TakerGets.currency, 16) }}</label>
+                                    <label>{{ currencyCodeFormat(item.TakerGets.currency, 16) }}</label>
                                     <fa style="margin: auto 5px" :icon="['fas', 'arrow-right']" size="xs"/>
-                                    <label>{{ currencyCodeFormat(item.created.TakerPays.currency, 16) }}</label>
+                                    <label>{{ currencyCodeFormat(item.TakerPays.currency, 16) }}</label>
                                 </div>
-                                <!-- <label v-if="getOrderTrade(item.created)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label> -->
+                                <!-- <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label> -->
                                 <label v-if="item.status === 'open'" class="trade-label active">{{ 'active' }}</label>
                             </div>
                             <div class="row">
                                 <h6 class="number">#{{ item.sequence }}</h6>
-                                <h6 class="number" style="margin-left: auto;">{{ epochToDate(item.created.date) }}</h6>
+                                <h6 class="number" style="margin-left: auto;">{{ epochToDate(item.date.created) }}</h6>
                             </div>
                             <hr>
                             <div class="column">
                                 <h5>
                                     Status:
-                                    <span>{{ item.status }}</span>
+                                    <span class="number">{{ item.status }}</span>
                                 </h5>
                                 <h5>
                                     Other info if not avail:
@@ -72,19 +72,19 @@
                                 </h5>
                                 <h5>
                                     Selling:
-                                    <span class="number">{{`0/${QuantityFormat(item.created.TakerGets.value, item.created.TakerGets.currency)} ${currencyCodeFormat(item.created.TakerGets.currency, 4)}`}}</span>
+                                    <span class="number">{{ QuantityFormat(item.TakerGets.values.filled, item.TakerGets.currency)}}/{{ QuantityFormat(item.TakerGets.values.created, item.TakerGets.currency) }} {{ currencyCodeFormat(item.TakerGets.currency, 4) }}</span>
                                 </h5>
                                 <h5>
                                     Selling price:
-                                    <span class="number">{{ orderPrice(item, 'sell') }}</span>
+                                    <span class="number">{{ priceFormat(orderPrice(item, 'sell')) }}</span>
                                 </h5>
                                 <h5>
                                     Buying:
-                                    <span class="number">{{`0/${QuantityFormat(item.created.TakerPays.value, item.created.TakerPays.currency)} ${currencyCodeFormat(item.created.TakerPays.currency, 4)}`}}</span>
+                                    <span class="number">{{ QuantityFormat(item.TakerPays.values.filled, item.TakerPays.currency) }}/{{QuantityFormat(item.TakerPays.values.created, item.TakerPays.currency) }} {{ currencyCodeFormat(item.TakerPays.currency, 4) }}</span>
                                 </h5>
                                 <h5>
                                     Buying price:
-                                    <span class="number">{{ orderPrice(item, 'buy') }}</span>
+                                    <span class="number">{{ priceFormat(orderPrice(item, 'buy')) }}</span>
                                 </h5>
                                 <h5>
                                     Condition:
@@ -110,7 +110,7 @@
 
 <script>
 import xapp from '../plugins/xapp'
-import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat } from '../plugins/number-format'
+import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat, priceFormat } from '../plugins/number-format'
 
 import SpinnerButton from '@/components/SpinnerButton.vue'
 
@@ -134,8 +134,8 @@ export default {
             if(this.selectedCurrency === 'All') return this.history
             
             const array = this.history.filter(offer => {
-                    const gets = offer.created.TakerGets
-                    const pays = offer.created.TakerPays
+                    const gets = offer.TakerGets
+                    const pays = offer.TakerPays
                     if(gets.currency === this.selectedCurrency || pays.currency === this.selectedCurrency) return true
                     else return false
                 })
@@ -146,8 +146,8 @@ export default {
                 if(offer.status !== 'open') return false
                 if(this.selectedCurrency === 'All') return true
 
-                const gets = offer.created.TakerGets
-                const pays = offer.created.TakerPays
+                const gets = offer.TakerGets
+                const pays = offer.TakerPays
                 if(gets.currency === this.selectedCurrency || pays.currency === this.selectedCurrency) return true
                 else return false
             })
@@ -172,6 +172,9 @@ export default {
         currencyFormat(amount, currency) {
             return currencyFormat(amount, currency)
         },
+        priceFormat(value) {
+            return priceFormat(value)
+        },
         epochToDate(epoch) {
             return epochToDate(epoch)
         },
@@ -186,15 +189,15 @@ export default {
         },
         orderPrice(order, trade) {
             let price = 0
-            const TakerPays = order.created.TakerPays
-            const TakerGets = order.created.TakerGets
+            const TakerPays = order.TakerPays
+            const TakerGets = order.TakerGets
 
             if (trade === 'sell') {
-                price = TakerPays.value / TakerGets.value
+                price = TakerPays.values.created / TakerGets.values.created
                 if(TakerPays.currency === 'XRP') price = price / 1_000_000
                 if(TakerGets.currency === 'XRP') price = price * 1_000_000
             } else if(trade === 'buy') {
-                price = TakerGets.value / TakerPays.value
+                price = TakerGets.values.created / TakerPays.values.created
                 if(TakerPays.currency === 'XRP') price = price * 1_000_000
                 if(TakerGets.currency === 'XRP') price = price / 1_000_000
             } else {
@@ -233,7 +236,7 @@ export default {
             }
         },
         async info(order) {
-            const txId = (order.status === 'open' ? order.open.hash : (order.canceled?.hash || order.created?.hash) )
+            const txId = (order.status === 'open' ? order.hashes[0] : (order.hashes[order.hashes.length - 1] || order.hashes[0]) )
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'

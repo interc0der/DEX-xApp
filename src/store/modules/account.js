@@ -114,7 +114,8 @@ const actions = {
 
         const res = await xrpl.send({
             command: 'account_tx',
-            account: context.state.address
+            account: context.state.address,
+            forward: true
         })
         context.commit('setAccountTransactions', res.transactions)
         context.dispatch('setOfferHistory', res.transactions)

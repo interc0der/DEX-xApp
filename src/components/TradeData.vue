@@ -26,26 +26,26 @@
                 <template v-if="activeTabIndex === 0">
                     <div class="order-item" v-for="(item, seq, index) in offers">
                         <div class="row" style="margin: 0; padding-left: 5px;">
-                            <label v-if="getOrderTrade(item.created)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label>
+                            <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item)">{{ getOrderTrade(item) }}</label>
                             <label v-else class="trade-label open">{{ 'open' }}</label>
                         </div>
 
                         <div class="row" style="padding: 5px 0 5px 15px;">
-                            <div v-if="tradingPair.base.currency === item.created.TakerGets.currency || tradingPair.quote.currency === item.created.TakerPays.currency" class="column">
-                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.created.TakerGets.currency, 16)})` }}</h6>
-                                <span class="number">{{ `${QuantityFormat(item.TakerGetsFilled, item.open.TakerGets.currency)}/${QuantityFormat(item.created.TakerGets.value, item.open.TakerGets.currency)}` }}</span>
+                            <div v-if="tradingPair.base.currency === item.TakerGets.currency || tradingPair.quote.currency === item.TakerPays.currency" class="column">
+                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.TakerGets.currency, 16)})` }}</h6>
+                                <span class="number">{{ `${QuantityFormat(item.TakerGets.values.filled, item.TakerGets.currency)}/${QuantityFormat(item.TakerGets.values.created, item.TakerGets.currency)}` }}</span>
                             </div>
-                            <div v-else-if="tradingPair.base.currency === item.created.TakerPays.currency || tradingPair.quote.currency === item.created.TakerGets.currency" class="column">
-                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.created.TakerPays.currency, 16)})` }}</h6>
-                                <span class="number">{{ `${QuantityFormat(item.TakerPaysFilled, item.open.TakerPays.currency)}/${QuantityFormat(item.created.TakerPays.value, item.open.TakerPays.currency)}` }}</span>
+                            <div v-else-if="tradingPair.base.currency === item.TakerPays.currency || tradingPair.quote.currency === item.TakerGets.currency" class="column">
+                                <h6>{{ `Filled/Total (${currencyCodeFormat(item.TakerPays.currency, 16)})` }}</h6>
+                                <span class="number">{{ `${QuantityFormat(item.TakerPays.values.filled, item.TakerPays.currency)}/${QuantityFormat(item.TakerPays.values.created, item.TakerPays.currency)}` }}</span>
                             </div>
                             <div v-else class="column">
                                 <h6>{{ `pays/gets` }}</h6>
                                 <span class="number">{{ `?No base/No quote?` }}</span>
                             </div>
                             <div class="column">
-                                <h6>{{ `Price: ${currencyCodeFormat(item.created.TakerGets.currency, 4)}/${currencyCodeFormat(item.created.TakerPays.currency, 4)}` }}</h6>
-                                <span v-if="getOrderTrade(item.created)" class="number">{{ priceFormat(getOrderPrice(item.created)) }}</span>
+                                <h6>{{ `Price: ${currencyCodeFormat(item.TakerGets.currency, 4)}/${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</h6>
+                                <span v-if="getOrderTrade(item)" class="number">{{ priceFormat(getOrderPrice(item)) }}</span>
                                 <span v-else>--</span>
                             </div>
                         </div>
@@ -68,7 +68,7 @@
 
 <script>
 import xapp from '../plugins/xapp'
-import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat } from '../plugins/number-format'
+import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat, priceFormat } from '../plugins/number-format'
 
 import SpinnerButton from '@/components/SpinnerButton.vue'
 
@@ -107,29 +107,8 @@ export default {
             if(currency === 'XRP') value = Number(value / 1_000_000)
             return quantityFormat(value)
         },
-        round(value, decimals) {
-            value = Number(value)
-            if(value < 1) return value.toPrecision(decimals)
-            const integerLength = (value.toFixed(0)).length
-            return value.toPrecision(decimals + integerLength)
-            // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
-        },
-        maxDecimals(float) {
-            const value = Math.trunc(float)
-            const length = value.toString().length
-            if(length > 1) {
-                return 2
-            } else {
-                if(value < 1) {
-                    return 4
-                } else {
-                    return 3
-                }
-            }
-        },
         priceFormat(value) {
-            const precision = this.maxDecimals(value)
-            return this.round(value, precision)
+            return priceFormat(value)
         },
         currencyCodeFormat(string, maxLength) {
             return currencyCodeFormat(string, maxLength)
@@ -166,7 +145,7 @@ export default {
         },
         async info(order) {
             // const txId = order.PreviousTxnID || order.hash || order.Sequence
-            const txId = order.open.hash
+            const txId = order.hashes[0]
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
@@ -192,11 +171,11 @@ export default {
             const trade = this.getOrderTrade(order)
             let price = 0
             if (trade === 'sell') {
-                price = order.TakerPays.value / order.TakerGets.value
+                price = order.TakerPays.values.open / order.TakerGets.values.open
                 if(order.TakerPays.currency === 'XRP') price = price / 1_000_000
                 if(order.TakerGets.currency === 'XRP') price = price * 1_000_000
             } else if(trade === 'buy') {
-                price = order.TakerGets.value / order.TakerPays.value
+                price = order.TakerGets.values.open / order.TakerPays.values.open
                 if(order.TakerPays.currency === 'XRP') price = price * 1_000_000
                 if(order.TakerGets.currency === 'XRP') price = price / 1_000_000
             } else {
@@ -292,6 +271,7 @@ export default {
     width: 50%;
     background-color: var(--var-secondary);
     padding: 6px 0;
+    height: 20px;
     text-align: center;
 }
 .action-row hr {
