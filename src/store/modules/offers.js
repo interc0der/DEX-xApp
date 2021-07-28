@@ -111,14 +111,22 @@ const actions = {
                             
                             array.forEach(mutation => {
                                 if(account !== address) {
+                                    const quantity = {
+                                        value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
+                                        currency: mutation.quantity.currency,
+                                        issuer: mutation.quantity.counterparty
+                                    }
+
+                                    const totalPrice = {
+                                        value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
+                                        currency: mutation.totalPrice.currency,
+                                        issuer: mutation.totalPrice.counterparty
+                                    }
+
                                     const offerChanges = {
                                         sequence: tx.Sequence,
-                                        TakerGets: {
-                                            value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value
-                                        },
-                                        TakerPays: {
-                                            value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value
-                                        }
+                                        TakerGets: mutation.direction === 'buy' ? quantity : totalPrice,
+                                        TakerPays: mutation.direction === 'buy' ? totalPrice : quantity
                                     }
                                     context.commit('intermediateOffer', offerChanges)
                                 }
@@ -129,16 +137,22 @@ const actions = {
                             // Balance changes for the account
                             parsed[account].forEach(mutation => {
                                 if(context.state.offers.hasOwnProperty(mutation.sequence)) {
-                                    // If there was a mutation with another offer
-                                    // offerCreatedObject.linkedTx.push(mutation)
+                                    const quantity = {
+                                        value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
+                                        currency: mutation.quantity.currency,
+                                        issuer: mutation.quantity.counterparty
+                                    }
+
+                                    const totalPrice = {
+                                        value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
+                                        currency: mutation.totalPrice.currency,
+                                        issuer: mutation.totalPrice.counterparty
+                                    }
+
                                     const offerChanges = {
                                         sequence: mutation.sequence,
-                                        TakerGets: {
-                                            value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value
-                                        },
-                                        TakerPays: {
-                                            value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value
-                                        }
+                                        TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
+                                        TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
                                     }
                                     context.commit('intermediateOffer', offerChanges)
                                 }
@@ -236,7 +250,7 @@ const mutations = {
                 condition: getCondition(offer),
                 TakerGets: {
                     currency: offer.TakerGets?.currency || 'XRP',
-                    issuer: offer.TakerGets?.issuer || null,
+                    issuer: offer.TakerGets?.issuer || undefined,
                     values: {
                         open: 0,
                         created: offer.TakerGets?.value || offer.TakerGets,
@@ -249,7 +263,7 @@ const mutations = {
                 },
                 TakerPays: {
                     currency: offer.TakerPays?.currency || 'XRP',
-                    issuer: offer.TakerPays?.issuer || null,
+                    issuer: offer.TakerPays?.issuer || undefined,
                     values: {
                         open: 0,
                         created: offer.TakerPays?.value || offer.TakerPays,
@@ -291,7 +305,7 @@ const mutations = {
                 condition: 'GoodTillCancel',
                 TakerGets: {
                     currency: offer.TakerGets?.currency || 'XRP',
-                    issuer: offer.TakerGets?.issuer || null,
+                    issuer: offer.TakerGets?.issuer || undefined,
                     values: {
                         open: offer.TakerGets?.value || offer.TakerGets,
                         created: 0,
@@ -304,7 +318,7 @@ const mutations = {
                 },
                 TakerPays: {
                     currency: offer.TakerPays?.currency || 'XRP',
-                    issuer: offer.TakerPays?.issuer || null,
+                    issuer: offer.TakerPays?.issuer || undefined,
                     values: {
                         open: offer.TakerPays?.value || offer.TakerPays,
                         created: 0,
@@ -333,8 +347,13 @@ const mutations = {
     intermediateOffer: (state, offer) => { 
         const offerState = state.offers[offer.sequence]
 
-        offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Number(offer.TakerGets.value)
-        offerState.TakerPays.values.filled = Number(offerState.TakerPays.values.filled) + Number(offer.TakerPays.value)
+        if(offerState.TakerGets.currency === offer.TakerGets.currency && offerState.TakerGets.issuer === offer.TakerGets.issuer) {
+            offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Number(offer.TakerGets.value)
+        }
+
+        if(offerState.TakerPays.currency === offer.TakerPays.currency && offerState.TakerPays.issuer === offer.TakerPays.issuer) {
+            offerState.TakerPays.values.filled = Number(offerState.TakerPays.values.filled) + Number(offer.TakerPays.value)
+        }
     },
     canceledOffer: (state, offer) => {
         const seq = offer.OfferSequence
