@@ -271,6 +271,8 @@ const mutations = {
             offerState.condition = getCondition(offer)
             offerState.date.created = offer.date
 
+            offerState.hashes.unshift(offer.hash)
+
             offerState.fees = Number(offer.Fee) + Number(offerState.fees)
         } else {
             const offerObject = {
