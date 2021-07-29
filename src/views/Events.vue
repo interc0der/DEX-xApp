@@ -35,6 +35,8 @@
                         <option value="r...">GateHub</option>
                         <option value="r...">BitStamp</option>
                     </select>
+                    <input type="checkbox" v-model="filterFailedResults">
+                    <label>hide failed results</label>
                 </div>
                 <hr style="margin: 10px 0; border: none;">
 
@@ -67,8 +69,8 @@
                                     <span class="number">{{ item.status }}</span>
                                 </h5>
                                 <h5>
-                                    Other info if not avail:
-                                    <span>--</span>
+                                    Filled status:
+                                    <span class="number">{{ item.filledStatus }}</span>
                                 </h5>
                                 <h5>
                                     Selling:
@@ -120,7 +122,8 @@ export default {
         return {
             activeTab: 2,
             selectedCurrency: 'All',
-            selectedIssuer: 'All'
+            selectedIssuer: 'All',
+            filterFailedResults: true
         }
     },
     computed: {
@@ -131,9 +134,12 @@ export default {
             return this.$store.getters.getOfferHistory
         },
         historyList() {
-            if(this.selectedCurrency === 'All') return this.history
+            if(this.selectedCurrency === 'All' && !this.filterFailedResults) return this.history
             
             const array = this.history.filter(offer => {
+                    if(this.filterFailedResults && offer.status === 'failed') return false
+                    if(this.selectedCurrency === 'All') return true
+
                     const gets = offer.TakerGets
                     const pays = offer.TakerPays
                     if(gets.currency === this.selectedCurrency || pays.currency === this.selectedCurrency) return true

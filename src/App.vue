@@ -4,7 +4,7 @@
         <Test v-if="!init" @passed="completedTest" />
         <Controller v-else-if="ready" />
         <Modal />
-        <!-- <Alert /> -->
+        <Alert />
         <div v-if="error" class="column h-100">
             <div id="failed-start" class="column">
                 <fa :icon="['fas', 'exclamation-circle']" />
@@ -17,7 +17,7 @@
 
 <script>
 import Controller from '@/views/Controller.vue'
-// import Alert from '@/components/Alert.vue'
+import Alert from '@/components/Alert.vue'
 import Modal from '@/components/Modal.vue'
 import Test from '@/components/Test.vue'
 
@@ -27,7 +27,7 @@ import client from './plugins/ws-client'
 export default {
 	name: 'App',
 	components: {
-        // Alert,
+        Alert,
         Modal,
         Test,
         Controller
@@ -103,7 +103,7 @@ export default {
 		})
 
 		client.on('transaction', tx => {
-			this.$store.dispatch('parseTx', tx)
+			this.$store.dispatch('parseTx', { transaction: tx, notify: true })
 		})
 	}
 }

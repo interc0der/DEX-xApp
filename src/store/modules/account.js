@@ -120,8 +120,9 @@ const actions = {
         context.commit('setAccountTransactions', res.transactions)
         context.dispatch('setOfferHistory', res.transactions)
     },
-    parseTx: (context, tx) => {
-        console.log(tx)
+    parseTx: (context, payload) => {
+        const tx = payload.transaction
+        if(payload.notify) console.log(tx)
     }
 }
 
