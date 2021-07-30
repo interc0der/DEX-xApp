@@ -71,7 +71,8 @@ const thousandSeperators = (value) => {
     return int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (str[1] ? '.' + frac : '')
 }
 
-const quantityFormat = (value) => {
+const quantityFormat = (value, currency) => {
+    if(currency === 'XRP') value = Number(value / 1_000_000)
     if(value < 1 && value > 0) {
         if(parseFloat(value) < 0.01) {
             return parseFloat(value).toFixed(3)
