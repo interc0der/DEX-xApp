@@ -4,7 +4,10 @@ import { notify } from "@kyvg/vue3-notification";
 
 const state = {
     offers: {},
-    openOfferSequences: []
+    openOfferSequences: [],
+    currencyList: {
+        XRP: null
+    }
 }
 
 const getters = {
@@ -44,6 +47,9 @@ const getters = {
     getOfferBySequence: state => sequence => {
         if(!state.offers.hasOwnProperty(sequence)) return null
         else return state.offers[sequence]
+    },
+    getOfferCurrencyList: state => {
+        return state.currencyList
     }
 }
 
@@ -87,6 +93,7 @@ const actions = {
     setOfferHistory: (context, txs) => {
         txs.forEach(transaction => {
             context.dispatch('parseTx', { transaction, notify: false })
+            context.commit('addCurrencyObject', transaction.tx)
         })
     },
     parseTx: (context, payload) => {
@@ -394,6 +401,18 @@ const mutations = {
         offerState.hashes.push(offer.hash)
 
         offerState.fees = Number(offer.Fee) + Number(offerState.fees)
+    },
+    addCurrencyObject: (state, tx) => {
+        console.log(tx.hasOwnProperty('TakerGets') && typeof tx.TakerGets === 'object' && typeof tx.TakerGets?.currency !== 'undefined' && typeof tx.TakerGets?.issuer !== 'undefined')
+        if(tx.hasOwnProperty('TakerGets') && typeof tx.TakerGets === 'object' && typeof tx.TakerGets?.currency !== 'undefined' && typeof tx.TakerGets?.issuer !== 'undefined') {
+            if(Array.isArray(state.currencyList[tx.TakerGets.currency]) && !state.currencyList[tx.TakerGets.currency].includes(tx.TakerGets.issuer)) state.currencyList[tx.TakerGets.currency].push(tx.TakerGets.issuer)
+            else state.currencyList[tx.TakerGets.currency] = [tx.TakerGets.issuer]
+        }
+
+        if(tx.hasOwnProperty('TakerPays') && typeof tx.TakerPays === 'object' && typeof tx.TakerPays?.currency !== 'undefined' && typeof tx.TakerPays?.issuer !== 'undefined') {
+            if(Array.isArray(state.currencyList[tx.TakerPays.currency]) && !state.currencyList[tx.TakerPays.currency].includes(tx.TakerPays.issuer)) state.currencyList[tx.TakerPays.currency].push(tx.TakerPays.issuer)
+            else state.currencyList[tx.TakerPays.currency] = [tx.TakerPays.issuer]
+        }
     }
 }
 

@@ -25,15 +25,11 @@
                 <div class="filters row">
                     <select class="arrow" v-model="selectedCurrency">
                         <option value="All">All</option>
-                        <option value="USD">USD</option>
-                        <option value="XRP">XRP</option>
-                        <option value="EUR">EUR</option>
-                        <option value="ETH">ETH</option>
+                        <option v-for="(item, key, index) in currencyList" :value="key">{{ currencyCodeFormat(key, 4) }}</option>
                     </select>
                     <select class="arrow" v-model="selectedIssuer">
                         <option value="All">All</option>
-                        <option value="r...">GateHub</option>
-                        <option value="r...">BitStamp</option>
+                        <option value="r..." disabled="true">Issuer</option>
                     </select>
                     <input type="checkbox" v-model="filterFailedResults">
                     <label>hide failed results</label>
@@ -56,7 +52,7 @@
                                     <label>{{ currencyCodeFormat(item.TakerPays.currency, 16) }}</label>
                                 </div>
                                 <!-- <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item.created)">{{ getOrderTrade(item.created) }}</label> -->
-                                <label v-if="item.status === 'open'" class="trade-label active">{{ 'active' }}</label>
+                                <label v-if="item.status.active" class="trade-label active">{{ 'active' }}</label>
                             </div>
                             <div class="row">
                                 <h6 class="number">#{{ item.sequence }}</h6>
@@ -127,6 +123,13 @@ export default {
         }
     },
     computed: {
+        currencyList() {
+            return this.$store.getters.getOfferCurrencyList
+        },
+        issuerList() {
+            // Todo
+            return []
+        },
         openOffers() {
             return this.$store.getters.getOpenOffers
         },
@@ -148,8 +151,7 @@ export default {
             return array.sort((a, b) =>  b.sequence - a.sequence )
         },
         openOrderList() {
-            const array = this.history.filter(offer => {
-                if(offer.status !== 'open') return false
+            const array = this.openOffers.filter(offer => {
                 if(this.selectedCurrency === 'All') return true
 
                 const gets = offer.TakerGets
