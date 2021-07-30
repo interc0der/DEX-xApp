@@ -276,7 +276,7 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--var-bg-color);
+    background-color: var(--var-bg-color-secondary);
     width: 65%;
     min-height: 250px;
     min-width: 160px;
@@ -342,7 +342,7 @@ img.currency-icon {
     height: 2.1rem;
     object-fit: cover;
     margin-right: 10px;
-    border: 2px solid var(--var-daker);
+    /* border: 2px solid var(--var-daker); */
     border-radius: 0.5rem;
     padding: 0.1rem;
 }

@@ -118,10 +118,11 @@ export default {
     /* MOONLIGHT #181A21 */
     --var-primary: rgba(255, 159, 10);
     --var-bg-color: black;
+    --var-bg-color-secondary: var(--grey4);
     --var-txt-color: white;
-    --var-secondary: rgb(48, 48, 48);
+    --var-secondary: var(--grey6);
     --var-border: rgb(39, 39, 39);
-    --var-backdrop: 255, 255, 255;
+    --var-backdrop: 0, 0, 0;
 
     /* Dark */
     --blue: rgba(10, 132, 255);
