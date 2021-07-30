@@ -281,6 +281,9 @@ hr {
     height: 100%;
     align-items: center;
 }
+.btn-primary {
+    background-color: var(--var-primary);
+}
 .btn-secondary {
     background-color: var(--var-secondary) !important;
     color: grey !important;

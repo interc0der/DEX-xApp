@@ -3,8 +3,8 @@
         <div class="modal-container">
             <div class="column">
                 <h2>{{ header }}</h2>
-                <p class="margin-0">{{ msg }}</p>
-                <a class="btn btn-primary btn-0-margin" @click="active = false">{{ buttonText }}</a>
+                <p>{{ msg }}</p>
+                <a class="btn btn-primary" @click="active = false">{{ buttonText }}</a>
             </div>
         </div>
     </div>
@@ -35,6 +35,7 @@ export default {
 <style scoped>
 .column {
     padding: 0 5px;
+    height: 100%;
 }
 .overlay {
     position: fixed;
@@ -52,7 +53,7 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--var-bg-color);
+    background-color: var(--var-bg-color-secondary);
     width: 160px;
     height: 160px;
     padding: 10px;
@@ -61,7 +62,15 @@ export default {
     flex-direction: row;
     align-items: center;
 }
-h2 {
+.modal-container h2 {
     margin: 0;
+    margin-top: 5px;
+}
+.modal-container p {
+    margin-top: 5px;
+}
+.modal-container .btn {
+    margin-top: auto;
+    margin-bottom: 8px;
 }
 </style>
