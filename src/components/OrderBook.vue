@@ -83,7 +83,7 @@ export default {
             return int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (str[1] ? '.' + frac : '')
         },
         emitPrice(value) {
-            this.$store.dispatch('setLimitPrice', Number(value))
+            this.$emitter.emit('limitPriceUpdate', value)
         },
         async bookOffers() {
             const dataSell = await client.send({

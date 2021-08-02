@@ -95,8 +95,8 @@ export default {
             this.InputQuantity = null
             this.limitPrice = null
             this.quantity = null
-            this.sliderValue = null,
-            this.limitPriceInputError = false,
+            this.sliderValue = null
+            this.limitPriceInputError = false
             this.quantityInputError = false
         }
     },
@@ -210,6 +210,9 @@ export default {
             if (this.direction === direction) return
             this.quantity = null
             this.InputQuantity = null
+            this.limitPriceInputError = false
+            this.quantityInputError = false
+
             this.direction = direction
         },
         currencyCodeFormat(string, maxLength) {
@@ -265,12 +268,6 @@ export default {
             } else {
                 // Other trading pair max decimals
             }
-        },
-        toggleDirection(direction) {
-            if (this.direction === direction) return
-            this.quantity = null
-            this.InputQuantity = null
-            this.direction = direction
         },
         takerObject(currency, issuer, quantity, price) {
             // calculate value if method = market from market price else get limit price
@@ -416,6 +413,11 @@ export default {
                 }
             }
         }
+    },
+    created() {
+        this.$emitter.on('limitPriceUpdate', price => {
+            this.priceInput = price
+        })
     }
 }
 </script>
