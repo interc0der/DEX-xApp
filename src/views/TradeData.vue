@@ -1,26 +1,28 @@
 <template>
-    <div>
+    <div class="h-100">
         <Header />
-    </div>
-    <div id="trade-data-wrapper">
-        <div id="trade-data-container">
-            <MarketData />
-            <hr>
-            <Chart />
-            <div class="tabs-row">
-                <label>
-                    <input type="radio" :value="1" name="tabs" id="tab1" v-model="activeTab"/>
-                    <span>Order Book</span>
-                </label>
+        <div id="trade-data-wrapper">
+            <div id="trade-data-container">
+                <MarketData />
+                <hr>
+                <div>
+                    <Chart />
+                </div>
+                <div class="tabs-row">
+                    <label>
+                        <input type="radio" :value="1" name="tabs" id="tab1" v-model="activeTab"/>
+                        <span>Order Book</span>
+                    </label>
 
-                <label>
-                    <input type="radio" :value="2" name="tabs" id="tab2" v-model="activeTab"/>
-                    <span>History</span>
-                </label>
+                    <label>
+                        <input type="radio" :value="2" name="tabs" id="tab2" v-model="activeTab"/>
+                        <span>History</span>
+                    </label>
+                </div>
+                <hr>
+                <MarketDepth v-if="activeTab === 1"/>
+                <TradeHistory v-if="activeTab === 2"/>
             </div>
-            <hr>
-            <MarketDepth v-if="activeTab === 1"/>
-            <TradeHistory v-if="activeTab === 2"/>
         </div>
     </div>
 </template>
@@ -33,6 +35,7 @@ import MarketDepth from '@/components/TradeData/MarketDepth.vue'
 import TradeHistory from '@/components/TradeData/TradeHistory.vue'
 
 export default {
+    name: 'MarketDataExpanded',
     components: { Header, MarketData, Chart, MarketDepth, TradeHistory },
     data() {
         return {
@@ -43,6 +46,7 @@ export default {
 </script>
 
 <style>
+
 #trade-data-wrapper {
     height: 100%;
     overflow-y: auto;

@@ -1,7 +1,7 @@
 <template>
     <Trade v-show="activeComponent === 'trade'"/>
     <Events v-show="activeComponent === 'events'"/>
-    <Data v-show="activeComponent === 'data'"/>
+    <Data v-if="activeComponent === 'data'"/>
 </template>
 
 <script>

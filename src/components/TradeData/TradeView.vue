@@ -40,7 +40,7 @@ import { createChart, CrosshairMode } from 'lightweight-charts'
 export default {
     data() {
         return {
-            candleSeries: null
+            candleSeries: undefined
         }
     },
     computed: {
@@ -51,13 +51,20 @@ export default {
             set(value){
                 this.$store.dispatch('setChartInterval', value)
             }
-        },
-        chartData() {
+        }
+    },
+    watch: {
+        '$store.getters.getChartData': function() {
+            console.log('wow update')
+            this.setChartData()
+        }
+    },
+    methods: {
+        setChartData() {
             const data = this.$store.getters.getChartData
-
             let array = []
             data.forEach(entry => {
-                array.push({
+                array.unshift({
                     time: Math.floor(Date.parse(entry.start) / 1000),
                     open: Number(entry.open),
                     high: Number(entry.high),
@@ -65,14 +72,7 @@ export default {
                     close: Number(entry.close)
                 })
             })
-            this.setChartData(array)
-            return data
-        }
-    },
-    methods: {
-        setChartData(data) {
-            data = data.reverse()
-            this.candleSeries.setData(data)
+            if(array.length > 0) this.candleSeries.setData(array)
         }
     },
     mounted() {
@@ -110,7 +110,6 @@ export default {
                 borderColor: line,
             }
         })
-
         this.candleSeries = chart.addCandlestickSeries({
             upColor: 'rgba(48, 209, 88, 0.4)',
             downColor: 'rgba(255, 69, 58, 0.4)',
@@ -119,8 +118,7 @@ export default {
             wickDownColor: red,
             wickUpColor: green,
         })
-
-        this.$store.dispatch('setChartInterval', '4hour')
+        this.$store.dispatch('getChartData')
     }
 }
 </script>

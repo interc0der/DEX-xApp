@@ -16,7 +16,7 @@ const state = {
     },
     tradeHistory: [],
     chartData: [],
-    selectedChartInterval: '5minute'
+    selectedChartInterval: '4hour'
 }
 
 const getters = {
