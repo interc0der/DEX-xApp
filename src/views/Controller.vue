@@ -13,7 +13,7 @@ export default {
     components: { Events, Trade, Data },
     data() {
         return {
-            activeComponent: 'data'
+            activeComponent: 'trade'
         }
     },
     created() {

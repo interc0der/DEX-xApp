@@ -3,7 +3,7 @@
         <thead>
             <tr>
                 <th>TimeStamp</th>
-                <th>Direction</th>
+                <!-- <th>Direction</th> -->
                 <th>Price</th>
                 <th>QTY</th>
             </tr>
@@ -12,7 +12,7 @@
         <tbody v-if="tradeHistory.length > 0">
             <tr v-for="(iteration, index) in (tradeHistory.length - 1)">
                 <td class="number">{{ formatTime(tradeHistory[index].executed_time) }}</td>
-                <td class="sell">NA</td>
+                <!-- <td class="sell">NA</td> -->
                 <td :class="{'buy': tradeHistory[index + 1].rate < tradeHistory[index].rate, 'sell': !tradeHistory[index + 1].rate < tradeHistory[index].rate}" class="number">
                     {{ priceFormat(tradeHistory[index].rate) }}
                     <fa v-if="tradeHistory[index + 1].rate < tradeHistory[index].rate" class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
@@ -61,6 +61,7 @@ export default {
 table {
     border-collapse: collapse;
     width: 100%;
+    margin-bottom: 60px;
 }
 th {
     color: var(--grey);

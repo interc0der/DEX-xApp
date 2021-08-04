@@ -5,10 +5,16 @@
                 <span @click="activeTabIndex = 0">{{ $t('xapp.orders.orders') }} ({{ Object.keys(offers).length }})</span>
                 <!-- <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span> -->
             </div>
-            <a @click="openEventView()">
-                <fa style="margin-right: 5px;" :icon="['fas', 'history']"/>
-                <label>{{ $t('xapp.orders.history') }}</label>
-            </a>
+            <div class="redirect-btn-group">
+                <a @click="openTradeDataView()" style="margin-right: 10px;">
+                    <fa style="margin-right: 5px;" :icon="['fas', 'chart-line']"/>
+                    <label>Charts</label>
+                </a>
+                <a @click="openEventView()">
+                    <fa style="margin-right: 5px;" :icon="['fas', 'history']"/>
+                    <label>{{ $t('xapp.orders.history') }}</label>
+                </a>
+            </div>
         </div>
         <hr>
         <div v-if="offers.length < 1 && activeTabIndex === 0" id="no-data-placeholder">
@@ -100,6 +106,9 @@ export default {
         }
     },
     methods: {
+        openTradeDataView() {
+            this.$emitter.emit('changeView', 'data')
+        },
         openEventView() {
             this.$emitter.emit('changeView', 'events')
         },
@@ -223,11 +232,16 @@ export default {
     font-weight: 600;
     margin-left: 15px;
 }
-.tab-head a {
+.tab-head .redirect-btn-group {
     margin-left: auto;
     margin-right: 20px;
     font-size: 0.9rem;
     font-weight: 600;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.redirect-btn-group a {
     display: flex;
     flex-direction: row;
     align-items: center;

@@ -14,7 +14,9 @@ const state = {
             issuer: 'rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq'
         }
     },
-    tradeHistory: []
+    tradeHistory: [],
+    chartData: [],
+    selectedChartInterval: '5minute'
 }
 
 const getters = {
@@ -37,10 +39,21 @@ const getters = {
     },
     getAllTradeHistory: state => {
         return state.tradeHistory
+    },
+    getChartData: state => {
+        return state.chartData
+    },
+    getSelectedChartInterval: state => {
+        return state.selectedChartInterval
     }
 }
 
 const actions = {
+    setChartInterval: (context, interval) => {
+        context.commit('setChartInterval', interval)
+        context.dispatch('getChartData')
+        return
+    },
     changeCurrencyPair: (context, obj) => {
         context.commit('setCurrencyPair', obj)
         context.dispatch('setLastTradedPrice')
@@ -51,10 +64,31 @@ const actions = {
     toggleSafeMarket: (context, bool) => {
         return context.commit('toggleSafeMarket', bool)
     },
+    getTickerData: async (context, payload) => {
+        const currencyPair = context.getters.getCurrencyPair
+        const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
+        const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+
+        const symbols = [`${currency1}/${currency2}`]
+        const res = await axios.post('https://api.sologenic.org/api/v1/tickers/24h', {
+            symbols: symbols
+        })
+        console.log(res.data)
+    },
     getChartData: async (context, payload) => {
+        const currencyPair = context.getters.getCurrencyPair
         // ["1m","3m","5m","15m","30m","1h","3h","6h","12h","1d","3d","1w"]
         // unix timestamp
         // https://api.sologenic.org/api/v1/ohlc?symbol=USD%2BrD9W7ULveavz8qBGM1R5jMgK2QKsEDPQVi%2FXRP&period=1m&from=1611007200&to=1611070980
+
+        const endpoint = 'https://data.ripple.com/v2/exchanges/'
+        const options = `?descending=true&result=tesSUCCESS&limit=1000&interval=${context.getters.getSelectedChartInterval}`
+        const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
+        const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+        const call = `${endpoint}${currency1}/${currency2}${options}`
+
+        const res = await axios.get(call)
+        return context.commit('setChartData', res.data.exchanges)
     },
     getTradeHistory: async (context, payload) => {
         const currencyPair = context.getters.getCurrencyPair
@@ -113,7 +147,12 @@ const mutations = {
     },
     setTradeHistory: (state, array) => {
         state.tradeHistory = array
-        console.log(state.tradeHistory)
+    },
+    setChartData: (state, data) => {
+        state.chartData = data
+    },
+    setChartInterval: (state, interval) => {
+        state.selectedChartInterval = interval
     }
 }
 

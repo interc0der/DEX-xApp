@@ -1,10 +1,12 @@
 <template>
+    <div>
+        <Header />
+    </div>
     <div id="trade-data-wrapper">
         <div id="trade-data-container">
             <MarketData />
-            <div>
-                <Chart />
-            </div>
+            <hr>
+            <Chart />
             <div class="tabs-row">
                 <label>
                     <input type="radio" :value="1" name="tabs" id="tab1" v-model="activeTab"/>
@@ -24,16 +26,17 @@
 </template>
 
 <script>
+import Header from '@/components/TradeData/Header'
 import MarketData from '@/components/TradeData/MarketData'
 import Chart from '@/components/TradeData/TradeView'
 import MarketDepth from '@/components/TradeData/MarketDepth.vue'
 import TradeHistory from '@/components/TradeData/TradeHistory.vue'
 
 export default {
-    components: { MarketData, Chart, MarketDepth, TradeHistory },
+    components: { Header, MarketData, Chart, MarketDepth, TradeHistory },
     data() {
         return {
-            activeTab: 2
+            activeTab: 1
         }
     }
 }

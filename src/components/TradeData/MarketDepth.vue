@@ -61,35 +61,77 @@ export default {
                     type: 'area',
                     zoomType: 'xy',
                     backgroundColor: bg,
-                    height: 200
+                    height: 200,
+                    // spacingTop: 0,
+                    spacingRight: 0,
+                    // spacingBottom: 0,
+                    spacingLeft: 0,
+                    plotBorderWidth: 0,
+                    // margin: [0,0,0,0]
                 },
                 title: {
                     text: ''
                 },
-                xAxis: {
-                    minPadding: 0,
-                    maxPadding: 0,
-                    plotLines: [{
-                        color: line,
-                        value: 0.1523,
-                        width: 1
-                    }],
-                    title: null,
-                    tickWidth: 0,
-                },
+                xAxis: [
+                    {
+                        // plotLines: [{
+                        //     color: line,
+                        //     value: 0.1523,
+                        //     width: 1
+                        // }],
+                        // tickAmount: 2,
+                        // type: 'logarithmic',
+                        title: null,
+                        width: '50%',
+                        labels: {
+                            style: {
+                                color: 'white'
+                            }
+                        },
+                        lineWidth: 0,
+                        tickWidth: 0,
+                        minPadding: 0,
+                        maxPadding: 0
+                    },
+                    {
+                        // type: 'logarithmic',
+                        title: {
+                            text: 'Price',
+                            style: {
+                            color: '#000000'
+                            },
+                        },
+                        labels: {
+                            style: {
+                            color: 'white'
+                            }
+                        },
+                        lineWidth: 0,
+                        tickWidth: 0,
+                        offset: 0,
+                        left: '50%',
+                        width: '50%',
+                        minPadding: 0,
+                        maxPadding: 0
+                    }
+                ],
                 yAxis: [
                     {
                         gridLineWidth: 0,
                         title: null,
-                        tickWidth: 1,
-                        tickLength: 5,
+                        tickWidth: 0,
                         tickPosition: 'inside',
                         labels: {
                             align: 'left',
-                            x: 8,
+                            x: 2,
                             style: {
                                 color: '#FFFFFF'
-                            }
+                            },
+                            // formatter:function(){
+                            //     if(this.value !=0){
+                            //         return this.value;
+                            //     }
+                            // }
                         }
                     },
                     {
@@ -97,14 +139,18 @@ export default {
                         linkedTo: 0,
                         gridLineWidth: 0,
                         title: null,
-                        tickWidth: 1,
                         tickLength: 5,
                         tickPosition: 'inside',
                         labels: {
                             align: 'right',
-                            x: -8,
+                            x: -2,
                             style: {
                                 color: '#FFFFFF'
+                            },
+                            formatter:function(){
+                                if(this.value !=0){
+                                    return this.value;
+                                }
                             }
                         }
                     }
@@ -128,12 +174,14 @@ export default {
                     {
                         name: 'Bids',
                         data: this.chartDataBids,
-                        color: green
+                        color: green,
+                        xAxis: 0
                     },
                     {
                         name: 'Ask',
                         data: this.chartDataAsk,
-                        color: red
+                        color: red,
+                        xAxis: 1
                     }
                 ]
             }
@@ -186,13 +234,13 @@ export default {
     width: 100%;
     box-sizing: border-box;
     padding: 0 20px;
-
+    margin-bottom: 50px;
 }
 .order-book-table-row {
     display: flex;
     flex-direction: row;
     width: 100%;
-    margin: 12px 0; 
+    margin: 10px 0; 
     font-size: 0.8rem;
 }
 .table-headers {
