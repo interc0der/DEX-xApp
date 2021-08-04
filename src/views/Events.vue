@@ -97,7 +97,7 @@
                         <div class="action-row">
                             <a @click="info(item)" style="border-radius: 0 0 0 10px">{{ $t('xapp.orders.info') }}</a>
                             <hr>
-                            <SpinnerButton v-if="item.status === 'open'" @click="cancel(item)" style="border-radius: 0 0 10px 0">{{ $t('xapp.orders.cancel') }}</SpinnerButton>
+                            <SpinnerButton v-if="item.status.active" @click="cancel(item)" style="border-radius: 0 0 10px 0">{{ $t('xapp.orders.cancel') }}</SpinnerButton>
                         </div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@ export default {
             if(this.selectedCurrency === 'All' && !this.filterFailedResults) return this.history
             
             const array = this.history.filter(offer => {
-                    if(this.filterFailedResults && offer.status === 'failed') return false
+                    if(this.filterFailedResults && offer.status.failed) return false
                     if(this.selectedCurrency === 'All') return true
 
                     const gets = offer.TakerGets
@@ -214,7 +214,7 @@ export default {
             return price 
         },
         async cancel(order) {
-            if(order.status !== 'open') {
+            if(!order.status.active) {
                 return this.$emitter.emit('modal', {
                         type: 'error',
                         title: this.$t('xapp.error.modal_title'),
@@ -373,27 +373,5 @@ select {
     width: 1px;
     border-top: none;
     margin: 0;
-}
-.tabs-row {
-    height: 30px;
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-.tabs-row input {
-    display: none;
-}
-.tabs-row label {
-    display: inline-block;
-    margin: 5px 10px;
-    cursor: pointer;
-}
-.tabs-row input:checked + span {
-    color: var(--var-txt-color);
-    border-bottom: 1px solid var(--var-primary);
-    transition: 0.5s ease;
-}
-.tabs-row input + span {
-    color: var(--grey);
-    transition: 0.5s ease;
 }
 </style>

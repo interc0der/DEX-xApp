@@ -12,6 +12,8 @@
     "@fortawesome/vue-fontawesome": "^3.0.0-4",
     "@kyvg/vue3-notification": "^2.3.3",
     "core-js": "^3.6.5",
+    "highcharts-vue": "^1.4.0",
+    "lightweight-charts": "^3.4.0",
     "mitt": "^3.0.0",
     "redaxios": "^0.4.1",
     "ripple-lib-transactionparser": "^0.8.2",

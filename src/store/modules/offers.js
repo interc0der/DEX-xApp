@@ -478,7 +478,6 @@ const mutations = {
         offerState.fees = Number(offer.Fee) + Number(offerState.fees)
     },
     addCurrencyObject: (state, tx) => {
-        console.log(tx.hasOwnProperty('TakerGets') && typeof tx.TakerGets === 'object' && typeof tx.TakerGets?.currency !== 'undefined' && typeof tx.TakerGets?.issuer !== 'undefined')
         if(tx.hasOwnProperty('TakerGets') && typeof tx.TakerGets === 'object' && typeof tx.TakerGets?.currency !== 'undefined' && typeof tx.TakerGets?.issuer !== 'undefined') {
             if(Array.isArray(state.currencyList[tx.TakerGets.currency]) && !state.currencyList[tx.TakerGets.currency].includes(tx.TakerGets.issuer)) state.currencyList[tx.TakerGets.currency].push(tx.TakerGets.issuer)
             else state.currencyList[tx.TakerGets.currency] = [tx.TakerGets.issuer]

@@ -105,7 +105,10 @@ export default {
 		client.on('transaction', tx => {
 			this.$store.dispatch('parseTx', { transaction: tx, notify: true })
 		})
-	}
+	},
+    beforeUnmount() {
+        this.$emitter.all.clear()
+    }
 }
 </script>
 
@@ -116,25 +119,25 @@ export default {
 
 :root {
     /* MOONLIGHT #181A21 */
-    --var-primary: rgba(255, 159, 10);
-    --var-bg-color: black;
+    --var-primary: rgb(255, 159, 10);
+    --var-bg-color: #181A21;
     --var-bg-color-secondary: var(--grey4);
     --var-txt-color: white;
-    --var-secondary: var(--grey6);
-    --var-border: rgb(39, 39, 39);
+    --var-secondary: var(--grey5);
+    --var-border:rgb(39, 39, 39);
     --var-backdrop: 0, 0, 0;
 
     /* Dark */
-    --blue: rgba(10, 132, 255);
-    --green: rgba(48, 209, 88);
-    --red: rgba(255, 69, 58);
-    --orange: rgba(255, 159, 10);
-    --grey: rgba(142, 142, 147);
-    --grey2: rgba(99, 99, 102);
-    --grey3: rgba(72, 72, 74);
-    --grey4: rgba(58, 58, 60);
-    --grey5: rgba(44, 44, 46);
-    --grey6: rgba(28, 28, 30);
+    --blue:rgb(10, 132, 255);
+    --green:rgb(48, 209, 88);
+    --red:rgb(255, 69, 58);
+    --orange:rgb(255, 159, 10);
+    --grey:rgb(142, 142, 147);
+    --grey2:rgb(99, 99, 102);
+    --grey3:rgb(72, 72, 74);
+    --grey4:rgb(58, 58, 60);
+    --grey5:rgb(44, 44, 46);
+    --grey6:rgb(28, 28, 30);
 
     /* Light */
     /* --blue: rgba(0, 122, 255);
@@ -216,6 +219,28 @@ html, body {
     font-size: 1rem;
     text-align: center;
     color: var(--var-white);
+}
+.tabs-row {
+    height: 30px;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+.tabs-row input {
+    display: none;
+}
+.tabs-row label {
+    display: inline-block;
+    margin: 5px 10px;
+    cursor: pointer;
+}
+.tabs-row input:checked + span {
+    color: var(--var-txt-color);
+    border-bottom: 1px solid var(--var-primary);
+    transition: 0.5s ease;
+}
+.tabs-row input + span {
+    color: var(--grey);
+    transition: 0.5s ease;
 }
 fieldset {
     display: flex;

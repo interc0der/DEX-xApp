@@ -5,24 +5,40 @@
                 <th class="price">{{ $t('xapp.order_book.price') }}</th>
                 <th class="quantity">{{ $t('xapp.order_book.quantity') }}</th>
             </tr>
-            <tr v-for="order in orders.sell">
-                <td class="price sell number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
-                <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
-            </tr>
+            <template v-if="askSide.length > 0 && isReady">
+                <tr v-for="order in askSide">
+                    <td class="price sell number" @click="emitPrice(order.price)">{{ NumberFormat(order.price) }}</td>
+                    <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
+                </tr>
+            </template>
+            <template v-else>
+                <tr v-for="index in 5">
+                    <td class="price sell number">--</td>
+                    <td class="quantity number">--</td>
+                </tr>
+            </template>
+
             <tr>
                 <td class="number" style="width: 100%" colspan="2">
                     <div id="market-row">
-                        <span id="market-price" :class="{'buy': trend, 'sell': !trend}" @click="emitPrice(marketPrice)">
-                            <fa class="market-price-trend-svg" size="xs" v-if="trend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ NumberFormat(marketPrice) }}
+                        <span id="market-price" :class="{'buy': marketTrend, 'sell': !marketTrend}" @click="emitPrice(marketPrice)">
+                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ NumberFormat(marketPrice) }}
                         </span>
-                        <!-- <span class="spread">{{ formattedSpread }}Δ</span> -->
                     </div>
                 </td>
             </tr>
-            <tr v-for="order in orders.buy">
-                <td class="price buy number" @click="emitPrice(order.p)">{{ NumberFormat(order.p) }}</td>
-                <td class="quantity number">{{ QuantityFormat(order.q) }}</td>
-            </tr>
+            <template v-if="bidSide.length > 0 && isReady">
+                <tr v-for="order in bidSide">
+                    <td class="price buy number" @click="emitPrice(order.price)">{{ NumberFormat(order.price) }}</td>
+                    <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
+                </tr>
+            </template>
+            <template v-else>
+                <tr v-for="index in 5">
+                    <td class="price buy number">--</td>
+                    <td class="quantity number">--</td>
+                </tr>
+            </template>
         </table>
     </div>
 </template>
@@ -36,43 +52,42 @@ export default {
     data() {
         return {
             orders: {
-                sell: [{ p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }],
-                buy: [{ p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }]
-            },
-            trend: true
+                sell: [],
+                buy: []
+            }
         }
     },
     computed: {
+        isReady() {
+            return this.$store.getters.getOrderBookReadyState
+        },
+        getOrderBookData() {
+            return this.$store.getters.getOrderBookData
+        },
+        askSide() {
+            return this.getOrderBookData.asks.slice(0, 5).reverse()
+        },
+        bidSide() {
+            return this.getOrderBookData.bids.slice(0, 5)
+        },
         tradingPair() {
             return this.$store.getters.getCurrencyPair
         },
         significance() {
-            const sellPrice = Number(this.orders.sell[this.orders.sell.length - 1].p)
+            const sellPrice = Number(this.marketPrice)
             return Number(this.maxDecimals(sellPrice))
         },
         marketPrice() {
-            const sellPrice = Number(this.orders.sell[this.orders.sell.length - 1].p)
-            const add = this.spread / 2
-            const price = sellPrice - add
+            const price = this.$store.getters.getMarketPrice
             return this.round(price, this.significance)
-            // return Number(price.toPrecision(this.significance))
         },
-        spread() {
-            const sellPrice = Number(this.orders.sell[this.orders.sell.length - 1].p)
-            const buyPrice = this.orders.buy[0].p
-            const spread = (sellPrice - buyPrice)
-            return Number(spread)
-        }
-    },
-    watch: {
-        marketPrice: function (newPrice, lastPrice) {
-            this.$store.dispatch('setMarketPrice', newPrice)
-            if(newPrice > lastPrice) this.trend = true
-            else this.trend = false
+        marketTrend() {
+            return this.$store.getters.marketTrend
         }
     },
     methods: {
         QuantityFormat(value) {
+            if(this.tradingPair.base.currency === 'XRP') value = value / 1_000_000
             return quantityFormat(value)
         },
         NumberFormat(value) {
@@ -84,36 +99,6 @@ export default {
         },
         emitPrice(value) {
             this.$emitter.emit('limitPriceUpdate', value)
-        },
-        async bookOffers() {
-            const dataSell = await client.send({
-                command: 'book_offers',
-                taker_gets: {
-                    currency: this.tradingPair.base.currency,
-                    issuer: this.tradingPair.base.currency === 'XRP' ? undefined : this.tradingPair.base.issuer
-                },
-                taker_pays: {
-                    currency: this.tradingPair.quote.currency,
-                    issuer: this.tradingPair.quote.currency === 'XRP' ? undefined : this.tradingPair.quote.issuer
-                }
-            })
-
-            const dataBuy = await client.send({
-                command: 'book_offers',
-                taker_gets: {
-                    currency: this.tradingPair.quote.currency,
-                    issuer: this.tradingPair.quote.currency === 'XRP' ? undefined : this.tradingPair.quote.issuer
-                },
-                taker_pays: {
-                    currency: this.tradingPair.base.currency,
-                    issuer: this.tradingPair.base.currency === 'XRP' ? undefined : this.tradingPair.base.issuer
-                }
-            })
-            
-            const askBook = dataSell.offers
-            const bidBook = dataBuy.offers
-            this.orders.sell = this.formatOrderBook(dataSell.offers).reverse()
-            this.orders.buy = this.formatOrderBook(dataBuy.offers, true)
         },
         maxDecimals(float) {
             const value = Math.trunc(float)
@@ -127,58 +112,6 @@ export default {
                     return 3
                 }
             }
-        },
-        formatOrderBook(offers, reverse) {
-            if(offers.length < 1) return [{ p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }]
-
-            let multiplier = 1
-            if(reverse) {
-                if(this.tradingPair.base.currency === 'XRP') multiplier = 0.000_001
-                else if(this.tradingPair.quote.currency === 'XRP') multiplier = 1_000_000
-            } else {
-                if(this.tradingPair.base.currency === 'XRP') multiplier = 1_000_000
-                else if(this.tradingPair.quote.currency === 'XRP') multiplier = 0.000_001
-            }
-
-            let precision = this.maxDecimals(reverse ? Math.pow(offers[0].quality * multiplier, -1) : offers[0].quality * multiplier)
-
-            let index = 0
-            const array = []
-            for(let i = 0; offers.length > i; i++) {
-                const offer = offers[i]
-                const obj = {
-                    p: 0,
-                    q: 0
-                }
-
-                var quantity = 0
-                if(this.tradingPair.base.currency === 'XRP') {
-                    if(reverse) quantity = offer.TakerPays / 1_000_000
-                    else quantity = offer.TakerGets / 1_000_000
-                } else {
-                    if(reverse) quantity = offer.TakerPays.value
-                    else quantity = offer.TakerGets.value
-                }
-                
-
-                if(i === 0) {
-                    obj.p = this.round(reverse ? Math.pow(offer.quality * multiplier, -1) : offer.quality * multiplier, precision)
-                    obj.q = quantity
-                } else {
-                    const price = this.round(reverse ? Math.pow(offer.quality * multiplier, -1) : offer.quality * multiplier, precision)
-                    if(array[index].p === price) {
-                        array[index].q = Number(quantity) + Number(array[index].q)
-                        continue
-                    } else {
-                        index++
-                        if(index >= 5) break
-                        obj.p = price
-                        obj.q = quantity
-                    }
-                }
-                array.push(obj)
-            }
-            return array
         },
         round(value, decimals) {
             value = Number(value)
@@ -263,19 +196,18 @@ export default {
             }
         }
     },
-    async mounted() {
-        this.bookOffers()
+    mounted() {
+        this.$store.dispatch('getOrderBookData')
         this.liquidityCheck()
+
+        let self = this
         client.on('ledger', () => {
-            this.bookOffers()
+            self.$store.dispatch('getOrderBookData')
         })
-        this.$emitter.on('changedCurrenct', data => {
-            this.orders = {
-                sell: [{ p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }],
-                buy: [{ p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }, { p: 0.0000, q: 0 }]
-            }
-            this.bookOffers()
-            this.liquidityCheck()
+
+        this.$emitter.on('changedCurrency', data => {
+            // Todo: No emitter 
+            self.liquidityCheck()
         })
     }
 }

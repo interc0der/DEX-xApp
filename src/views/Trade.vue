@@ -18,7 +18,11 @@ import TradeHeader from '@/components/TradeHeader.vue'
 import TradeForm from '@/components/TradeForm.vue'
 
 export default {
-    components: { TradeData, OrderBook, TradeHeader, TradeForm }    
+    components: { TradeData, OrderBook, TradeHeader, TradeForm },
+    beforeMount() {
+        this.$store.dispatch('getTradeHistory')
+        this.$store.dispatch('setLastTradedPrice')
+    }
 }
 </script>
 

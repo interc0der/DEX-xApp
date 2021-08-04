@@ -111,7 +111,10 @@ export default {
             return this.$store.getters.getCurrencyPair
         },
         marketPrice() {
-            return this.$store.getters.getMarketPrice
+            const price = this.$store.getters.getMarketPrice
+            if(this.tradingPair.base.currency === 'XRP') return price / 1_000_000
+            else if(this.tradingPair.quote.currency === 'XRP') return price * 1_000_000
+            else return price
         },
         quantityInputValidator() {
             if(this.quantity < 0) return true
@@ -418,6 +421,9 @@ export default {
         this.$emitter.on('limitPriceUpdate', price => {
             this.priceInput = price
         })
+    },
+    beforeUnmount() {
+        this.$emitter.off('limitPriceUpdate')
     }
 }
 </script>
