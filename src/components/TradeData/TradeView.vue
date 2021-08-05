@@ -1,6 +1,6 @@
 <template>
     <div id="trade-view-container">
-        <div id="chart-view-options-row">
+        <div id="chart-view-options-row" class="number">
             <label>
                 <input type="radio" value="1hour" name="chart-interval" v-model="interval">
                 <span>1h</span>
@@ -86,8 +86,9 @@ export default {
 
         var chart = createChart('chart-view', {
             layout: {
-                backgroundColor: bg,
+                backgroundColor: 'rgba(0,0,0,0)',
                 textColor: 'rgba(255, 255, 255, 0.9)',
+                fontFamily: 'din-2014, sans-serif'
             },
             grid: {
                 vertLines: {
@@ -110,6 +111,7 @@ export default {
                 borderColor: line,
             }
         })
+
         this.candleSeries = chart.addCandlestickSeries({
             upColor: 'rgba(48, 209, 88, 0.4)',
             downColor: 'rgba(255, 69, 58, 0.4)',
@@ -151,7 +153,11 @@ export default {
     transition: 0.5s ease;
 }
 #chart-view {
-    width: 100%;
+    width: calc(100% + 40px);
     height: 400px;
+}
+#chart-view table tr > td:first-child+td+td > div {
+    /* background-color: red; */
+    left: -35px !important;
 }
 </style>
