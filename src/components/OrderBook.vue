@@ -7,7 +7,7 @@
             </tr>
             <template v-if="askSide.length > 0 && isReady">
                 <tr v-for="order in askSide">
-                    <td class="price sell number" @click="emitPrice(order.price)">{{ NumberFormat(order.price) }}</td>
+                    <td class="price sell number" @click="emitPrice(order.price)">{{ priceFormat(order.price) }}</td>
                     <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
                 </tr>
             </template>
@@ -22,14 +22,15 @@
                 <td class="number" style="width: 100%" colspan="2">
                     <div id="market-row">
                         <span id="market-price" :class="{'buy': marketTrend, 'sell': !marketTrend}" @click="emitPrice(marketPrice)">
-                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ NumberFormat(marketPrice) }}
+                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ priceFormat(marketPrice) }}
                         </span>
                     </div>
                 </td>
             </tr>
+
             <template v-if="bidSide.length > 0 && isReady">
                 <tr v-for="order in bidSide">
-                    <td class="price buy number" @click="emitPrice(order.price)">{{ NumberFormat(order.price) }}</td>
+                    <td class="price buy number" @click="emitPrice(order.price)">{{ priceFormat(order.price) }}</td>
                     <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
                 </tr>
             </template>
@@ -46,16 +47,11 @@
 <script>
 import { LiquidityCheck } from 'xrpl-orderbook-reader'
 import client from '../plugins/ws-client'
-import { quantityFormat } from '../plugins/number-format'
+import { quantityFormat, priceFormat } from '../plugins/number-format'
 
 export default {
     data() {
-        return {
-            orders: {
-                sell: [],
-                buy: []
-            }
-        }
+        return {}
     },
     computed: {
         isReady() {
@@ -73,52 +69,21 @@ export default {
         tradingPair() {
             return this.$store.getters.getCurrencyPair
         },
-        significance() {
-            const sellPrice = Number(this.marketPrice)
-            return Number(this.maxDecimals(sellPrice))
-        },
         marketPrice() {
-            const price = this.$store.getters.getMarketPrice
-            return this.round(price, this.significance)
+            return this.$store.getters.getMarketPrice
         },
         marketTrend() {
             return this.$store.getters.marketTrend
         }
     },
     methods: {
+        priceFormat,
         QuantityFormat(value) {
             if(this.tradingPair.base.currency === 'XRP') value = value / 1_000_000
             return quantityFormat(value)
         },
-        NumberFormat(value) {
-            const str = value.toString().split('.', 2)
-            const int = str[0] || '0'
-            const frac = str[1] || ''
-
-            return int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (str[1] ? '.' + frac : '')
-        },
         emitPrice(value) {
             this.$emitter.emit('limitPriceUpdate', value)
-        },
-        maxDecimals(float) {
-            const value = Math.trunc(float)
-            const length = value.toString().length
-            if(length > 1) {
-                return 2
-            } else {
-                if(value < 1) {
-                    return 4
-                } else {
-                    return 3
-                }
-            }
-        },
-        round(value, decimals) {
-            value = Number(value)
-            if(value < 1) return value.toPrecision(decimals)
-            const integerLength = (value.toFixed(0)).length
-            return value.toPrecision(decimals + integerLength)
-            // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
         },
         async liquidityCheck() {
             // if base is xrp amount = 500 
