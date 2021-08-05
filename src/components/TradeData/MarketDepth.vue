@@ -68,6 +68,9 @@ export default {
                     spacingLeft: 0,
                     plotBorderWidth: 0,
                     // margin: [0,0,0,0]
+                    style: {
+                        fontFamily: 'din-2014, sans-serif'
+                    }
                 },
                 title: {
                     text: ''
