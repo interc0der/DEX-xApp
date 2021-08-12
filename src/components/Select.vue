@@ -91,6 +91,8 @@ import svgImg from '@/assets/svg/switch.vue'
 import { currencyCodeFormat } from '../plugins/number-format'
 import xapp from '../plugins/xapp'
 
+import _merge from 'lodash/merge'
+
 export default {
     emits: ['close'],
     components: { svgImg },
@@ -119,7 +121,8 @@ export default {
             if(Object.keys(lines).length < 1) {
                 return list
             }
-            return {...lines, ...list}
+            return _merge(lines, list)
+            // return {...lines, ...list}
         },
         curatedCurrencies() {
             const obj = {}
