@@ -65,21 +65,33 @@ const getters = {
 const actions = {
     setAccount: async (context, account) => {
         context.commit('setAccount', account)
-
-        await context.dispatch('setAccountInfo')
+        try {
+            await context.dispatch('setAccountInfo')
+        } catch(e) {
+            console.log('Error with account info: ' + e)
+        }
         context.dispatch('setAccountLines')
-        context.dispatch('setAccountObjects')
-        context.dispatch('setAccountTransactions')
+
+        await Promise.all([context.dispatch('setAccountObjects'), context.dispatch('setAccountTransactions')])
+        
+        context.dispatch('checkOpenOffers')
+
         return
     },
     setAccountInfo: async (context) => {
-        const res = await xrpl.send({
-            command: 'account_info',
-            account: context.state.address
+        return new Promise( async (resolve, reject) => {
+            const res = await xrpl.send({
+                command: 'account_info',
+                account: context.state.address
+            })
+            if(res.status === 'error') {
+                context.commit('setAccountInfo', res.error)
+                reject(res.error)
+            } else {
+                context.commit('setAccountInfo', res.account_data)
+                resolve(res.account_data)
+            }
         })
-
-        if(res.status === 'error') return context.commit('setAccountInfo', res.error)
-        else return context.commit('setAccountInfo', res.account_data)
     },
     setAccountLines: async (context) => {
         if(context.getters.hasAccountErrors) return context.commit('setAccountLines', [])
@@ -115,9 +127,12 @@ const actions = {
         const res = await xrpl.send({
             command: 'account_tx',
             account: context.state.address,
-            forward: true
+            // forward: true,
+            // todo delete next line!!!
+            // limit: 1
         })
-        context.commit('setAccountTransactions', res.transactions)
+        const reversedTx = res.transactions.reverse()
+        context.commit('setAccountTransactions', reversedTx)
         context.dispatch('setOfferHistory', res.transactions)
     },
     parseTx: (context, payload) => {

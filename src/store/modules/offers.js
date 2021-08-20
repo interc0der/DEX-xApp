@@ -70,28 +70,22 @@ const getCondition = (tx) => {
 }
 
 const actions = {
-    setOpenOffers: async (context, objects) => {
+    checkOpenOffers: (context) => {
+        // check if offer has created offer tx
+        console.log('checking open offers...')
+
+        context.state.openOfferSequences.forEach(seq => {
+            if(!context.state.offers[seq].hasOfferCreateData) {
+                if(context.state.offers[seq].hashes[0]) context.dispatch('getPreviousExchanges', context.state.offers[seq].hashes[0])
+            }
+        })
+    },
+    setOpenOffers: (context, objects) => {
         objects.forEach(offer => {
             context.commit('setOpenOfferObject', offer)
         })
         return
         // todo Use this code if there is an offer without a created/initial tx get it until prevTx does not exsists
-        try {
-            const offers = await Promise.all(
-                objects.map(async offer => {
-
-                    const originalTx = await xrpl.send({
-                        command: 'tx',
-                        transaction: offer.PreviousTxnID
-                    })
-                    // If original TX has PreviousTxnID fetch that one if there is no offfer create tx in the history
-                    const offerObject = {}
-                    return offerObject
-                })
-            )
-        } catch(e) {
-            throw e
-        }
     },
     setOfferHistory: (context, txs) => {
         txs.forEach(transaction => {
@@ -99,15 +93,67 @@ const actions = {
             context.commit('addCurrencyObject', transaction.tx)
         })
     },
+    getPreviousExchanges: async (context, transaction) => {
+        const account = context.rootGetters.getAccount
+
+        const getOfferTx = async (PreviousTxnID) => {
+            try {
+                const previousTx = await xrpl.send({
+                    command: 'tx',
+                    transaction: PreviousTxnID
+                })
+                context.dispatch('parseTx', {
+                    transaction: {
+                        tx: previousTx,
+                        meta: previousTx.meta,
+                        validated: previousTx.validated
+                    }
+                })
+            } catch(e) {
+                throw e
+            }
+        }
+
+        if(transaction.hasOwnProperty('meta')) {
+            for(const node of transaction.meta.AffectedNodes) {
+                if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
+                    if(node.ModifiedNode?.FinalFields?.Account === account) {
+                        const PreviousTxnID = node.ModifiedNode.PreviousTxnID
+    
+                        await getOfferTx(PreviousTxnID)
+                    }
+                }
+            }
+        } else if(typeof transaction === 'string') {
+            await getOfferTx(transaction)
+        }
+        
+        return
+
+    },
+    parseMetaData: (context, meta) => {
+        const account = context.rootGetters.getAccount
+
+        for(const node of meta.AffectedNodes) {
+            if(node.DeletedNode?.LedgerEntryType === 'Offer') {
+                if(node.DeletedNode?.FinalFields?.Account === account) {
+                    context.commit('closedOffer', node.DeletedNode.FinalFields.Sequence)
+                }
+            }
+        }
+
+    },
     parseTx: (context, payload) => {
         const account = context.rootGetters.getAccount
         const transaction = payload.transaction
         const tx = transaction.tx || transaction.transaction
         
-        if(payload.notify) {
-            console.log(payload)
-            context.dispatch('setAccountObjects')
-        }
+        context.dispatch('parseMetaData', transaction.meta)
+
+        // if(payload.notify) {
+        //     console.log(payload)
+        //     context.dispatch('setAccountObjects')
+        // }
 
         switch(tx.TransactionType) {
             case 'OfferCreate':
@@ -116,7 +162,8 @@ const actions = {
                 if(tx.Account === account) {
                     tx.condition = getCondition(tx)
                     tx.TransactionResult = transaction.meta.TransactionResult
-
+                    
+                    // The initial offercreate for this offer seq and account
                     context.commit('setInitialOffer', tx)
 
                     for(const address in parsed) {
@@ -143,9 +190,10 @@ const actions = {
                                     TakerGets: mutation.direction === 'buy' ? quantity : totalPrice,
                                     TakerPays: mutation.direction === 'buy' ? totalPrice : quantity
                                 }
+                                // If there's a trade on the inital offer create mutate the values
                                 context.commit('intermediateOffer', offerChanges)
                             }
-                        })                            
+                        })
                     }
 
                     // if(transaction.hasOwnProperty('engine_result') && transaction.engine_result !== 'tesSUCCESS') {}
@@ -153,7 +201,7 @@ const actions = {
                     
                 } else {
                     if(parsed.hasOwnProperty(account)) {
-                        // Balance changes for the account
+                        // transactions/exchanges after the initial offer create
                         parsed[account].forEach(mutation => {
                             if(context.state.offers.hasOwnProperty(mutation.sequence)) {
                                 const quantity = {
@@ -175,6 +223,11 @@ const actions = {
                                     TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
                                     TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
                                 }
+
+                                if(!context.state.offers.hasOwnProperty(offerChanges.sequence) || !context.state.offers[offerChanges.sequence]?.hasOfferCreateData) {
+                                    context.dispatch('getPreviousExchanges', transaction)
+                                }
+
                                 context.commit('intermediateOffer', offerChanges)
                                 if(payload.notify) context.dispatch('notify', offerChanges)
                             }
@@ -187,6 +240,10 @@ const actions = {
                 const canceledOffer = {
                     sequence: tx.OfferSequence,
                     type: 'cancel'
+                }
+                // If there is a Canceled offer but no
+                if(!context.state.offers.hasOwnProperty(canceledOffer.sequence) || !context.state.offers[canceledOffer.sequence]?.hasOfferCreateData) {
+                    context.dispatch('getPreviousExchanges', transaction)
                 }
                 if(payload.notify) context.dispatch('notify', canceledOffer)
                 break
@@ -326,6 +383,8 @@ const mutations = {
             offerState.hashes.unshift(offer.hash)
 
             offerState.fees = Number(offer.Fee) + Number(offerState.fees)
+
+            offerState.hasOfferCreateData = true
         } else {
             const offerObject = {
                 sequence: seq,
@@ -368,7 +427,7 @@ const mutations = {
                 },
                 hashes: [offer.hash],
                 fees: offer.Fee,
-                linkedOffers: []
+                hasOfferCreateData: true
             }
             
             if(offerObject.condition === 'ImmediateOrCancel') {
@@ -430,8 +489,7 @@ const mutations = {
                     // todo: Check if also is created 
                 },
                 fees: 0,
-                hashes:[],
-                linkedOffers: []
+                hashes:[offer.PreviousTxnID]
             }
             state.offers[seq] = offerObject
         }
@@ -442,6 +500,7 @@ const mutations = {
     intermediateOffer: (state, offer) => { 
         const offerState = state.offers[offer.sequence]
 
+        // Value mutations on the offer
         if(offerState.TakerGets.currency === offer.TakerGets.currency && offerState.TakerGets.issuer === offer.TakerGets.issuer) {
             offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Number(offer.TakerGets.value)
             if(offerState.TakerGets.values.filled >= offerState.TakerGets.values.created) offerState.filledStatus = 'filled'
@@ -461,6 +520,15 @@ const mutations = {
             offerState.status.canceled = true
         }
     },
+    closedOffer: (state, seq) => {
+        // Todo
+        if(!state.offers.hasOwnProperty(seq)) return console.log('Deleted Offer Node Without TX history')
+
+        const offerState = state.offers[seq]
+        offerState.status.active = false
+
+        state.openOfferSequences = state.openOfferSequences.filter(openSeq => openSeq !== seq)
+    },
     canceledOffer: (state, offer) => {
         const seq = offer.OfferSequence
         
@@ -476,6 +544,8 @@ const mutations = {
         offerState.hashes.push(offer.hash)
 
         offerState.fees = Number(offer.Fee) + Number(offerState.fees)
+
+        state.openOfferSequences = state.openOfferSequences.filter(openSeq => openSeq !== seq)
     },
     addCurrencyObject: (state, tx) => {
         if(tx.hasOwnProperty('TakerGets') && typeof tx.TakerGets === 'object' && typeof tx.TakerGets?.currency !== 'undefined' && typeof tx.TakerGets?.issuer !== 'undefined') {
