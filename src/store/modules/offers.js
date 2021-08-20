@@ -274,6 +274,11 @@ const actions = {
                             TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
                             TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
                         }
+
+                        if(!context.state.offers.hasOwnProperty(offerChanges.sequence) || !context.state.offers[offerChanges.sequence]?.hasOfferCreateData) {
+                            context.dispatch('getPreviousExchanges', transaction)
+                        }
+
                         context.commit('intermediateOffer', offerChanges)
                         if(payload.notify) context.dispatch('notify', offerChanges)
                     }
