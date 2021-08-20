@@ -3,6 +3,7 @@ import axios from 'redaxios'
 const state = {
     isSafe: true,
     marketPrice: 0,
+    marketPriceHasError: false,
     marketTrend: 0,
     currencyPair: {
         base: {
@@ -87,8 +88,12 @@ const actions = {
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
 
-        const res = await axios.get(call)
-        return context.commit('setChartData', res.data.exchanges)
+        try {
+            const res = await axios.get(call)
+            return context.commit('setChartData', res.data.exchanges)
+        } catch(e) {
+            console.error(e)
+        }
     },
     getTradeHistory: async (context, payload) => {
         const currencyPair = context.getters.getCurrencyPair
@@ -98,9 +103,13 @@ const actions = {
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
-
-        const res = await axios.get(call)
-        return context.commit('setTradeHistory', res.data.exchanges)
+        
+        try {
+            const res = await axios.get(call)
+            return context.commit('setTradeHistory', res.data.exchanges)
+        } catch(e) {
+            console.error(e)
+        }
     },
     setLastTradedPrice: async (context, bool) => {
         const currencyPair = context.getters.getCurrencyPair
@@ -111,8 +120,13 @@ const actions = {
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
 
-        const res = await axios.get(call)
-        return context.commit('setMarketPrice', res.data)
+        try {
+            const res = await axios.get(call)
+            return context.commit('setMarketPrice', res.data)
+        } catch(e) {
+            console.error(e)
+            return context.commit('setMarketPrice', 'error')
+        }
     }
 }
 
@@ -129,6 +143,11 @@ const mutations = {
         }
     },
     setMarketPrice: (state, obj) => {
+        if(obj === 'error') return state.marketPrice = 0
+        if(!obj.hasOwnProperty('exchanges')) return state.marketPrice = 0
+        else if(obj.exchanges.length < 1) return state.marketPrice = 0
+        else if(!obj.exchanges[0].hasOwnProperty('rate')) return state.marketPrice = 0
+
         const price = obj.exchanges[0].rate
 
         if(price) {

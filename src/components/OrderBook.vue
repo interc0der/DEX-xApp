@@ -168,6 +168,7 @@ export default {
         let self = this
         client.on('ledger', () => {
             self.$store.dispatch('getOrderBookData')
+            self.$store.dispatch('setLastTradedPrice')
         })
 
         this.$emitter.on('changedCurrency', data => {
