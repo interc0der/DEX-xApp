@@ -1,4 +1,4 @@
-import { parseOrderbookChanges } from 'ripple-lib-transactionparser'
+// import { parseOrderbookChanges, parseBalanceChanges } from 'ripple-lib-transactionparser'
 import xrpl from '../../plugins/ws-client'
 import { notify } from "@kyvg/vue3-notification"
 
@@ -9,7 +9,8 @@ const state = {
     openOfferSequences: [],
     currencyList: {
         XRP: null
-    }
+    },
+    createdNotAvailableSequences: []
 }
 
 const getters = {
@@ -76,7 +77,7 @@ const actions = {
 
         context.state.openOfferSequences.forEach(seq => {
             if(!context.state.offers[seq].hasOfferCreateData) {
-                if(context.state.offers[seq].hashes[0]) context.dispatch('getPreviousExchanges', context.state.offers[seq].hashes[0])
+                if(context.state.offers[seq].hashes[0]) context.dispatch('getOfferTx', { PreviousTxnID: context.state.offers[seq].hashes[0], Sequence: seq } )
             }
         })
     },
@@ -85,208 +86,244 @@ const actions = {
             context.commit('setOpenOfferObject', offer)
         })
         return
-        // todo Use this code if there is an offer without a created/initial tx get it until prevTx does not exsists
     },
     setOfferHistory: (context, txs) => {
         txs.forEach(transaction => {
             context.dispatch('parseTx', { transaction, notify: false })
-            context.commit('addCurrencyObject', transaction.tx)
         })
     },
-    getPreviousExchanges: async (context, transaction) => {
-        const account = context.rootGetters.getAccount
+    getOfferTx: async (context, payload) => {
+        const PreviousTxnID = payload.PreviousTxnID
+        const Sequence = payload.Sequence
+        const overRide = payload.overRide
 
-        const getOfferTx = async (PreviousTxnID) => {
-            try {
-                const previousTx = await xrpl.send({
-                    command: 'tx',
-                    transaction: PreviousTxnID
-                })
-                context.dispatch('parseTx', {
-                    transaction: {
-                        tx: previousTx,
-                        meta: previousTx.meta,
-                        validated: previousTx.validated
-                    }
-                })
-            } catch(e) {
-                throw e
-            }
-        }
+        if(context.state.createdNotAvailableSequences.includes(Sequence) && !overRide) return
+        else context.commit('addNoCreatedSequenceToArray', Sequence)
 
-        if(transaction.hasOwnProperty('meta')) {
-            for(const node of transaction.meta.AffectedNodes) {
-                if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
-                    if(node.ModifiedNode?.FinalFields?.Account === account) {
-                        const PreviousTxnID = node.ModifiedNode.PreviousTxnID
-    
-                        await getOfferTx(PreviousTxnID)
+        try {
+            const previousTx = await xrpl.send({
+                command: 'tx',
+                transaction: PreviousTxnID
+            })
+            context.dispatch('parseTx', {
+                transaction: {
+                    tx: previousTx,
+                    meta: previousTx.meta,
+                    validated: previousTx.validated
+                }
+            })
+
+            const account = context.rootGetters.getAccount
+            
+            if(previousTx.hasOwnProperty('meta')) {
+                for(const node of previousTx.meta.AffectedNodes) {
+                    if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
+                        if(node.ModifiedNode?.FinalFields?.Account === account) {
+                            const PreviousTxnID = node.ModifiedNode.PreviousTxnID
+        
+                            await context.dispatch('getOfferTx', { PreviousTxnID, Sequence: Sequence, overRide: true })
+                        }
                     }
                 }
             }
-        } else if(typeof transaction === 'string') {
-            await getOfferTx(transaction)
-        }
-        
-        return
 
+        } catch(e) {
+            throw e
+        }
     },
-    parseMetaData: (context, meta) => {
+    parseMetaData: (context, transaction) => {
+        const meta = transaction.meta
+        const tx = transaction.tx || transaction.transaction
+        const notify = transaction.notify
+
+        if(!meta) {
+            console.error('No metadata to parse!')
+            return console.log(transaction)
+        }
+
+        // only for testing todo delete
+        // if(tx.Sequence !== 19626395) {
+        //     return
+        // } else {
+        //     console.log(transaction)
+        // }
+
         const account = context.rootGetters.getAccount
+
+        let offerChange = false
+        let offerChangedSequence
+        const balanceChanges = {}
+
+        const addBalance = (account, amountObj) => {
+            if(!Array.isArray(balanceChanges[account])) {
+                balanceChanges[account] = [amountObj]
+            } else {
+                for(let obj of balanceChanges[account]) {
+                    if(obj.currency === amountObj.currency && obj.issuer === amountObj.issuer) {
+                        obj.value = Number(obj.value) + Number(amountObj.value)
+                        return
+                    }
+                }
+                balanceChanges[account].push(amountObj)
+            }
+        }
+
+        if(tx.TransactionType === 'OfferCreate' && tx.Account === account) {
+            tx.condition = getCondition(tx)
+            tx.TransactionResult = transaction.meta.TransactionResult
+            context.commit('setInitialOffer', tx)
+        }
 
         for(const node of meta.AffectedNodes) {
+            // Offer Create
+            if(node.CreatedNode?.LedgerEntryType === 'Offer') {
+                if(node.CreatedNode?.NewFields?.Account === account) {
+                    offerChange = true
+                    offerChangedSequence = node.CreatedNode.NewFields.Sequence
+                }
+            }
+
+            // Offer Cancel or filled
             if(node.DeletedNode?.LedgerEntryType === 'Offer') {
                 if(node.DeletedNode?.FinalFields?.Account === account) {
-                    context.commit('closedOffer', node.DeletedNode.FinalFields.Sequence)
+                    // TODO TakerPays & TakerGets value = 0 is filled else Part Filled???
+                    const sequence = node.DeletedNode.FinalFields.Sequence
+                    const PreviousTxnID = node.DeletedNode.FinalFields.PreviousTxnID
+                    
+                    if(tx.TransactionType !== 'OfferCancel') {
+                        offerChange = true
+                        offerChangedSequence = sequence
+                        
+                        context.commit('closedOffer', node.DeletedNode.FinalFields.Sequence)
+                        context.commit('setFilledState', sequence)
+                    } else {
+                        context.commit('canceledOffer', tx)
+                    }
+
+                    if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
+                        context.dispatch('getOfferTx', { PreviousTxnID: PreviousTxnID, Sequence: sequence } )
+                    }
                 }
+            }
+          
+            if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
+                if(node.ModifiedNode?.FinalFields?.Account === account) {
+                    const sequence = node.ModifiedNode.FinalFields.Sequence
+                    const PreviousTxnID = node.ModifiedNode.PreviousTxnID
+
+                    offerChange = true
+                    offerChangedSequence = sequence
+
+                    if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
+                        context.dispatch('getOfferTx', { PreviousTxnID, Sequence: sequence } )
+                    }
+                }
+            }
+
+            if(node.ModifiedNode?.LedgerEntryType === 'AccountRoot') {
+                if(node.ModifiedNode?.FinalFields?.Account === account) {
+                    // parse XRP amount
+                    let value = Number(node.ModifiedNode.FinalFields.Balance) - Number(node.ModifiedNode.PreviousFields.Balance) + Number(tx.Fee)
+
+                    if(value === 0) {
+                        // console.log('only fee paid no offerchanges')
+                    } else {
+                        addBalance(node.ModifiedNode.FinalFields.Account, {
+                            currency: 'XRP',
+                            issuer: null,
+                            value: value
+                        })
+                    }
+                }
+            }
+
+            if(node.ModifiedNode?.LedgerEntryType === 'RippleState') {
+                // parse IOU's
+                if(!isNaN(node.ModifiedNode.FinalFields?.Balance?.value) && !isNaN(node.ModifiedNode.PreviousFields?.Balance?.value) ) {
+                    // HighLimit === issuer if balance positive else is account
+                    // LowLimit === account
+
+                    let issuerRipple
+                    let accountRipple
+                    if( Math.sign(Number(node.ModifiedNode.FinalFields?.Balance?.value)) >= 0 ) {
+                        issuerRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                        accountRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                    } else {
+                        issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                        accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                    }
+                    
+
+                    let value = Number(node.ModifiedNode.FinalFields.Balance.value) - Number(node.ModifiedNode.PreviousFields?.Balance?.value)
+                    const balanceObj = {
+                        currency: node.ModifiedNode.FinalFields.Balance.currency,
+                        issuer: issuerRipple,
+                        value: value
+                    }
+
+                    // addBalance(issuerRipple, balanceObj)
+                    addBalance(accountRipple, balanceObj)
+                }
+            }
+        }
+
+        if(tx.TransactionType === 'OfferCreate' && tx.Account === account && !offerChange && tx.TransactionResult === 'tesSUCCESS') {
+            offerChange = true
+            offerChangedSequence = tx.Sequence
+
+            context.commit('setFilledState', tx.Sequence)
+        }
+
+        if(offerChange) {
+            const offerChanges = {
+                sequence: offerChangedSequence,
+                balanceChanges: balanceChanges[account]
+            }
+            // console.log(offerChanges)
+            context.commit('intermediateOffer', offerChanges)
+
+            if(notify) {
+                switch(tx.TransactionType) {
+                    case 'OfferCreate':
+                        if(tx.Account === account) context.dispatch('notify', { type: 'create', sequence: tx.Sequence })
+                        else {
+                            // todo :: If offercreate by other account that hit the offer check for offer sequence in this state 
+                            offerChanges['type'] = 'mutation'
+                            context.dispatch('notify', offerChanges)
+                        }
+                        break
+                    case 'OfferCancel':
+                        context.dispatch('notify', {
+                            sequence: tx.OfferSequence,
+                            type: 'cancel'
+                        })
+                        break
+                    case 'Payment':
+                        // todo :: Check if is payment or hit an offer sequence also check if is in state
+                        break
+                    // case 'TrustSet':
+                    //     break
+                    default:
+                        console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
+                }
+            }
+        } else {
+            if(notify) {
+                console.log('todo notify me please')
             }
         }
 
     },
     parseTx: (context, payload) => {
-        const account = context.rootGetters.getAccount
         const transaction = payload.transaction
         const tx = transaction.tx || transaction.transaction
+
+        transaction.notify = payload.notify
         
-        context.dispatch('parseMetaData', transaction.meta)
+        context.dispatch('parseMetaData', transaction)
+        context.commit('addCurrencyObject', tx)
 
-        // if(payload.notify) {
-        //     console.log(payload)
-        //     context.dispatch('setAccountObjects')
-        // }
-
-        switch(tx.TransactionType) {
-            case 'OfferCreate':
-                const parsed = parseOrderbookChanges(transaction.meta)
-
-                if(tx.Account === account) {
-                    tx.condition = getCondition(tx)
-                    tx.TransactionResult = transaction.meta.TransactionResult
-                    
-                    // The initial offercreate for this offer seq and account
-                    context.commit('setInitialOffer', tx)
-
-                    for(const address in parsed) {
-                        const array = parsed[address]
-                        
-                        array.forEach(mutation => {
-                            if(account !== address) {
-                                const quantity = {
-                                    value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
-                                    currency: mutation.quantity.currency,
-                                    issuer: mutation.quantity.counterparty
-                                }
-
-                                const totalPrice = {
-                                    value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
-                                    currency: mutation.totalPrice.currency,
-                                    issuer: mutation.totalPrice.counterparty
-                                }
-
-                                const offerChanges = {
-                                    sequence: tx.Sequence,
-                                    makerExchangeRate: mutation.makerExchangeRate,
-                                    type: 'create',
-                                    TakerGets: mutation.direction === 'buy' ? quantity : totalPrice,
-                                    TakerPays: mutation.direction === 'buy' ? totalPrice : quantity
-                                }
-                                // If there's a trade on the inital offer create mutate the values
-                                context.commit('intermediateOffer', offerChanges)
-                            }
-                        })
-                    }
-
-                    // if(transaction.hasOwnProperty('engine_result') && transaction.engine_result !== 'tesSUCCESS') {}
-                    if(payload.notify) context.dispatch('notify', { type: 'create', sequence: tx.Sequence })
-                    
-                } else {
-                    if(parsed.hasOwnProperty(account)) {
-                        // transactions/exchanges after the initial offer create
-                        parsed[account].forEach(mutation => {
-                            if(context.state.offers.hasOwnProperty(mutation.sequence)) {
-                                const quantity = {
-                                    value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
-                                    currency: mutation.quantity.currency,
-                                    issuer: mutation.quantity.counterparty
-                                }
-
-                                const totalPrice = {
-                                    value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
-                                    currency: mutation.totalPrice.currency,
-                                    issuer: mutation.totalPrice.counterparty
-                                }
-
-                                const offerChanges = {
-                                    sequence: mutation.sequence,
-                                    makerExchangeRate: mutation.makerExchangeRate,
-                                    type: 'mutation',
-                                    TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
-                                    TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
-                                }
-
-                                if(!context.state.offers.hasOwnProperty(offerChanges.sequence) || !context.state.offers[offerChanges.sequence]?.hasOfferCreateData) {
-                                    context.dispatch('getPreviousExchanges', transaction)
-                                }
-
-                                context.commit('intermediateOffer', offerChanges)
-                                if(payload.notify) context.dispatch('notify', offerChanges)
-                            }
-                        })
-                    }
-                }
-                break
-            case 'OfferCancel':
-                context.commit('canceledOffer', tx)
-                const canceledOffer = {
-                    sequence: tx.OfferSequence,
-                    type: 'cancel'
-                }
-                // If there is a Canceled offer but no
-                if(!context.state.offers.hasOwnProperty(canceledOffer.sequence) || !context.state.offers[canceledOffer.sequence]?.hasOfferCreateData) {
-                    context.dispatch('getPreviousExchanges', transaction)
-                }
-                if(payload.notify) context.dispatch('notify', canceledOffer)
-                break
-            case 'Payment':
-                const parsedPayment = parseOrderbookChanges(transaction.meta)
-                if(!parsedPayment.hasOwnProperty(account)) break
-
-                const parsedPaymentArray = parsedPayment[account]
-                
-                parsedPaymentArray.forEach(mutation => {
-                    if(context.state.offers.hasOwnProperty(mutation.sequence)) {
-                        const quantity = {
-                            value: mutation.quantity.currency === 'XRP' ? mutation.quantity.value * 1_000_000 : mutation.quantity.value,
-                            currency: mutation.quantity.currency,
-                            issuer: mutation.quantity.counterparty
-                        }
-
-                        const totalPrice = {
-                            value: mutation.totalPrice.currency === 'XRP' ? mutation.totalPrice.value * 1_000_000 : mutation.totalPrice.value,
-                            currency: mutation.totalPrice.currency,
-                            issuer: mutation.totalPrice.counterparty
-                        }
-
-                        const offerChanges = {
-                            sequence: mutation.sequence,
-                            makerExchangeRate: mutation.makerExchangeRate,
-                            type: 'mutation',
-                            TakerGets: mutation.direction === 'sell' ? quantity : totalPrice,
-                            TakerPays: mutation.direction === 'sell' ? totalPrice : quantity
-                        }
-
-                        if(!context.state.offers.hasOwnProperty(offerChanges.sequence) || !context.state.offers[offerChanges.sequence]?.hasOfferCreateData) {
-                            context.dispatch('getPreviousExchanges', transaction)
-                        }
-
-                        context.commit('intermediateOffer', offerChanges)
-                        if(payload.notify) context.dispatch('notify', offerChanges)
-                    }
-                })
-                break
-            default:
-                console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
-        }
+        return
     },
     notify: (context, tx) => {
         console.log('notify...')
@@ -355,10 +392,19 @@ const actions = {
             case 'mutation':
                 switch(offerObj.filledStatus) {
                     case 'partially-filled':
+                        let TakerGets = 0
+                        let TakerPays = 0
+                        tx.balanceChanges.forEach(change => {
+                            if(offerObj.TakerGets.currency === change.currency && (offerObj.TakerGets.issuer === change.issuer || offerObj.TakerGets.currency === 'XRP') ) {
+                                TakerGets = Number(TakerGets) + Math.abs(Number(change.value))
+                            } else if(offerObj.TakerPays.currency === change.currency && (offerObj.TakerPays.issuer === change.issuer || offerObj.TakerPays.currency === 'XRP') ) {
+                                TakerPays = Number(TakerPays) + Math.abs(Number(change.value))
+                            }
+                        })
                         return notify({
                             title: 'Partial filled',
                             type: 'success',
-                            text: `Exchanged ${quantityFormat(tx.TakerGets.value, offerObj.TakerGets.currency)}/${quantityFormat(offerObj.TakerGets.values.created, offerObj.TakerGets.currency)}${currencyCodeFormat(offerObj.TakerGets.currency, 4)} for ${quantityFormat(tx.TakerPays.value, offerObj.TakerPays.currency)}/${quantityFormat(offerObj.TakerPays.values.created, offerObj.TakerPays.currency)}${currencyCodeFormat(offerObj.TakerPays.currency, 4)}`,
+                            text: `Exchanged ${quantityFormat(TakerGets, offerObj.TakerGets.currency)}/${quantityFormat(offerObj.TakerGets.values.created, offerObj.TakerGets.currency)}${currencyCodeFormat(offerObj.TakerGets.currency, 4)} for ${quantityFormat(TakerPays, offerObj.TakerPays.currency)}/${quantityFormat(offerObj.TakerPays.values.created, offerObj.TakerPays.currency)}${currencyCodeFormat(offerObj.TakerPays.currency, 4)}`,
                             data: offerObj
                         })
                     case 'filled':
@@ -502,28 +548,21 @@ const mutations = {
         if(!state.openOfferSequences.includes(seq)) state.openOfferSequences.push(seq)
 
     },
-    intermediateOffer: (state, offer) => { 
+    intermediateOffer: (state, offer) => {
+        if(!state.offers.hasOwnProperty(offer.sequence)) return console.log('Sequence is not set for Offer')
         const offerState = state.offers[offer.sequence]
 
-        // Value mutations on the offer
-        if(offerState.TakerGets.currency === offer.TakerGets.currency && offerState.TakerGets.issuer === offer.TakerGets.issuer) {
-            offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Number(offer.TakerGets.value)
-            if(offerState.TakerGets.values.filled >= offerState.TakerGets.values.created) offerState.filledStatus = 'filled'
-            else if(offerState.filledStatus === 'empty') offerState.filledStatus = 'partially-filled'
-        }
+        if(offer.balanceChanges?.length >= 2) {
+            offer.balanceChanges.forEach(change => {
+                if(offerState.TakerGets.currency === change.currency && (offerState.TakerGets.issuer === change.issuer || offerState.TakerGets.currency === 'XRP') ) {
+                    offerState.TakerGets.values.filled = Number(offerState.TakerGets.values.filled) + Math.abs(Number(change.value))
+                } else if(offerState.TakerPays.currency === change.currency && (offerState.TakerPays.issuer === change.issuer || offerState.TakerPays.currency === 'XRP') ) {
+                    offerState.TakerPays.values.filled = Number(offerState.TakerPays.values.filled) + Math.abs(Number(change.value))
+                }
+            })
 
-        if(offerState.TakerPays.currency === offer.TakerPays.currency && offerState.TakerPays.issuer === offer.TakerPays.issuer) {
-            offerState.TakerPays.values.filled = Number(offerState.TakerPays.values.filled) + Number(offer.TakerPays.value)
-            if(offerState.TakerPays.values.filled >= offerState.TakerPays.values.created) offerState.filledStatus = 'filled'
-            else if(offerState.filledStatus === 'empty') offerState.filledStatus = 'partially-filled'        
-        }
-
-        if(offerState.filledStatus === 'filled') {
-            offerState.status.closed = true
-        }
-        if(offerState.condition === 'ImmediateOrCancel' && offerState.filledStatus === 'partially-filled') {
-            offerState.status.canceled = true
-        }
+            if(offerState.filledStatus !== 'filled') offerState.filledStatus = 'partially-filled'
+        } // else console.log('Offer mutation not on both sides')
     },
     closedOffer: (state, seq) => {
         // Todo
@@ -562,6 +601,16 @@ const mutations = {
             if(Array.isArray(state.currencyList[tx.TakerPays.currency]) && !state.currencyList[tx.TakerPays.currency].includes(tx.TakerPays.issuer)) state.currencyList[tx.TakerPays.currency].push(tx.TakerPays.issuer)
             else state.currencyList[tx.TakerPays.currency] = [tx.TakerPays.issuer]
         }
+    },
+    addNoCreatedSequenceToArray: (state, seq) => {
+        state.createdNotAvailableSequences.push(seq)
+    },
+    setFilledState: (state, seq) => {
+        // Todo
+        if(!state.offers.hasOwnProperty(seq)) return console.log('Setting FilledStatus to Offer Without TX history/sequence available')
+
+        const offerState = state.offers[seq]
+        offerState.filledStatus = 'filled'
     }
 }
 
