@@ -126,10 +126,7 @@ const actions = {
 
         const res = await xrpl.send({
             command: 'account_tx',
-            account: context.state.address,
-            // forward: true,
-            // todo delete next line!!!
-            // limit: 1
+            account: context.state.address
         })
         const reversedTx = res.transactions.reverse()
         context.commit('setAccountTransactions', reversedTx)
