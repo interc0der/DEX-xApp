@@ -111,12 +111,15 @@ const actions = {
         const res = await xrpl.send({
             command: 'account_objects',
             account: context.state.address,
-            type: 'offer'
+            // type: 'offer'
         })
 
+        const objects = res.account_objects
+        const offerObjects = objects.filter(object => object.LedgerEntryType === 'Offer')
+
         // Dispatch action to set offers
-        context.dispatch('setOpenOffers', res.account_objects)
-        return context.commit('setAccountObjects', res.account_objects)
+        context.dispatch('setOpenOffers', offerObjects)
+        return context.commit('setAccountObjects', objects)
     },
     setAccountTransactions: async (context) => {
         if(context.getters.hasAccountErrors) {
@@ -135,7 +138,24 @@ const actions = {
     parseTx: (context, payload) => {
         const tx = payload.transaction
         if(payload.notify) console.log(tx)
-    }
+    },
+    changeBalance: (context, balancechanges) => {
+        console.log('Balance change parsing please...')
+        console.log(balancechanges)
+        balancechanges.forEach(change => {
+            context.commit('changeBalanceValue', change)
+        })
+    },
+    addObjectToAccount: (context, object) => {
+        console.log('Add Object to account please...')
+        console.log(object)
+        context.commit('addObject', object)
+    },
+    removeObjectFromAccount: (context, object) => {
+        console.log('Remove Object From account please...')
+        console.log(object)
+        context.commit('removeObject', object)
+    },
 }
 
 const mutations = {
@@ -153,6 +173,28 @@ const mutations = {
     },
     setAccountTransactions: (state, arr) => {
         state.accountTransactions = arr
+    },
+    addObject: (state, object) => {
+        state.accountObjects.push(object)
+    },
+    removeObject: (state, objectToDelete) => {
+        // todo :: !!!
+        state.accountObjects = state.accountObjects.filter(object => {
+            if(object.LedgerEntryType === 'Offer') {
+                if(objectToDelete.Sequence === object.Sequence) return false
+                else return true
+            } else {
+                return true
+            }
+        })
+    },
+    changeBalanceValue: (state, currencyObj) => {
+        if(currencyObj.currency === 'XRP') {
+            let value = isNaN(currencyObj.value) ? 0 - currencyObj.fees : Number(currencyObj.value) - Number(currencyObj.fees)
+            state.accountInfo.Balance = Math.trunc( Number(state.accountInfo.Balance) + value )
+        } else {
+            // Todo iou/trustline/ripplestate balance
+        }
     }
 }
 

@@ -134,7 +134,7 @@ const actions = {
     parseMetaData: (context, transaction) => {
         const meta = transaction.meta
         const tx = transaction.tx || transaction.transaction
-        const notify = transaction.notify
+        const notification = transaction.notify
 
         if(!meta) {
             console.error('No metadata to parse!')
@@ -171,10 +171,25 @@ const actions = {
         if(tx.TransactionType === 'OfferCreate' && tx.Account === account) {
             tx.condition = getCondition(tx)
             tx.TransactionResult = transaction.meta.TransactionResult
+
             context.commit('setInitialOffer', tx)
         }
 
         for(const node of meta.AffectedNodes) {
+
+            if(node.CreatedNode && node.CreatedNode?.NewFields?.Account === account && notification) {
+                // increase/increment object reserve for account
+                context.dispatch('addObjectToAccount', node.CreatedNode.NewFields)
+
+                // set offer to active
+                context.commit('setOpenOfferObject', node.CreatedNode.NewFields)
+            }
+
+            if(node.hasOwnProperty('DeletedNode') && node.DeletedNode?.FinalFields?.Account === account && notification) {
+                // decrease object reserve
+                context.dispatch('removeObjectFromAccount', node.DeletedNode.FinalFields)
+            }
+
             // Offer Create
             if(node.CreatedNode?.LedgerEntryType === 'Offer') {
                 if(node.CreatedNode?.NewFields?.Account === account) {
@@ -227,11 +242,17 @@ const actions = {
 
                     if(value === 0) {
                         // console.log('only fee paid no offerchanges')
+                        addBalance(node.ModifiedNode.FinalFields.Account, {
+                            currency: 'XRP',
+                            issuer: null,
+                            fees: Number(tx.Fee)
+                        })
                     } else {
                         addBalance(node.ModifiedNode.FinalFields.Account, {
                             currency: 'XRP',
                             issuer: null,
-                            value: value
+                            value: value,
+                            fees: Number(tx.Fee)
                         })
                     }
                 }
@@ -282,7 +303,7 @@ const actions = {
             // console.log(offerChanges)
             context.commit('intermediateOffer', offerChanges)
 
-            if(notify) {
+            if(notification) {
                 switch(tx.TransactionType) {
                     case 'OfferCreate':
                         if(tx.Account === account) context.dispatch('notify', { type: 'create', sequence: tx.Sequence })
@@ -301,18 +322,39 @@ const actions = {
                     case 'Payment':
                         // todo :: Check if is payment or hit an offer sequence also check if is in state
                         break
-                    // case 'TrustSet':
-                    //     break
                     default:
                         console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
                 }
             }
         } else {
-            if(notify) {
+            if(notification) {
                 console.log('todo notify me please')
+                switch(tx.TransactionType) {
+                    case 'Payment':
+                        if(tx.Account === account) {
+                            notify({
+                                title: 'Payment send',
+                                type: 'success',
+                                text: `Send ${quantityFormat(tx.Amount?.value || tx.Amount, tx.Amount?.currency || 'XRP')}${currencyCodeFormat(tx.Amount?.currency || 'XRP', 4)}`,
+                                // data: offerObj
+                            })
+                        } else {
+                            notify({
+                                title: 'Payment received',
+                                type: 'success',
+                                text: `Received ${quantityFormat(tx.Amount?.value || tx.Amount, tx.Amount?.currency || 'XRP')}${currencyCodeFormat(tx.Amount?.currency || 'XRP', 4)}`,
+                            })
+                        }
+                        break
+                    case 'TrustSet':
+                        break
+                }
             }
         }
 
+        if(notification) {
+            context.dispatch('changeBalance', balanceChanges[account])
+        }
     },
     parseTx: (context, payload) => {
         const transaction = payload.transaction
