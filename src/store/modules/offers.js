@@ -177,17 +177,38 @@ const actions = {
 
         for(const node of meta.AffectedNodes) {
 
-            if(node.CreatedNode && node.CreatedNode?.NewFields?.Account === account && notification) {
+            if(node.hasOwnProperty('CreatedNode') && node.CreatedNode?.NewFields?.Account === account && notification) {
                 // increase/increment object reserve for account
-                context.dispatch('addObjectToAccount', node.CreatedNode.NewFields)
+                context.dispatch('addObjectToAccount', node.CreatedNode)
 
                 // set offer to active
                 context.commit('setOpenOfferObject', node.CreatedNode.NewFields)
             }
 
-            if(node.hasOwnProperty('DeletedNode') && node.DeletedNode?.FinalFields?.Account === account && notification) {
+            if(node.hasOwnProperty('CreatedNode') && (node.CreatedNode?.NewFields?.HighLimit?.issuer === account || node.CreatedNode?.NewFields?.LowLimit?.issuer || account) && notification) {
+                // If trustline Added
+                context.dispatch('addObjectToAccount', node.CreatedNode)
+                notify({
+                    title: 'Created Trustline',
+                    type: 'success',
+                    text: `${currencyCodeFormat(node.CreatedNode?.NewFields?.HighLimit?.currency, 4)} - ${node.CreatedNode?.NewFields?.HighLimit?.issuer === account ? node.CreatedNode?.NewFields?.LowLimit?.issuer : node.CreatedNode?.NewFields?.HighLimit?.issuer}`,
+                })
+            }
+
+            if(node.hasOwnProperty('DeletedNode') && notification) {
                 // decrease object reserve
-                context.dispatch('removeObjectFromAccount', node.DeletedNode.FinalFields)
+                if(node.DeletedNode?.FinalFields?.Account === account) {
+                    // remove offer object
+                    context.dispatch('removeObjectFromAccount', node.DeletedNode)
+                } else if(node.DeletedNode?.FinalFields?.HighLimit?.issuer === account || node.DeletedNode?.FinalFields?.LowLimit?.issuer === account) {
+                    // remove if ripplestate/trustline/iou
+                    context.dispatch('removeObjectFromAccount', node.DeletedNode)
+                    notify({
+                        title: 'Deleted Trustline',
+                        type: 'success',
+                        text: `${currencyCodeFormat(node.DeletedNode?.FinalFields?.HighLimit?.currency, 4)} - ${node.DeletedNode?.FinalFields?.HighLimit?.issuer === account ? node.DeletedNode?.FinalFields?.LowLimit?.issuer : node.DeletedNode?.FinalFields?.HighLimit?.issuer}`,
+                    })
+                }
             }
 
             // Offer Create

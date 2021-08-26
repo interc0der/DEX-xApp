@@ -149,12 +149,14 @@ const actions = {
     addObjectToAccount: (context, object) => {
         console.log('Add Object to account please...')
         console.log(object)
-        context.commit('addObject', object)
+        object.NewFields.index = object.LedgerIndex
+        context.commit('addObject', object.NewFields)
     },
     removeObjectFromAccount: (context, object) => {
         console.log('Remove Object From account please...')
         console.log(object)
-        context.commit('removeObject', object)
+        object.FinalFields.index = object.LedgerIndex
+        context.commit('removeObject', object.FinalFields)
     },
 }
 
@@ -180,12 +182,8 @@ const mutations = {
     removeObject: (state, objectToDelete) => {
         // todo :: !!!
         state.accountObjects = state.accountObjects.filter(object => {
-            if(object.LedgerEntryType === 'Offer') {
-                if(objectToDelete.Sequence === object.Sequence) return false
-                else return true
-            } else {
-                return true
-            }
+            if(object.index === objectToDelete.index) return false
+            else return true
         })
     },
     changeBalanceValue: (state, currencyObj) => {
