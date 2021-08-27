@@ -123,8 +123,9 @@ const actions = {
     },
     setAccountTransactions: async (context) => {
         if(context.getters.hasAccountErrors) {
-            context.dispatch('setOfferHistory', [])
-            return context.commit('setAccountTransactions', [])
+            context.commit('setAccountTransactions', [])
+            context.dispatch('resetOfferState')
+            return
         }
 
         const res = await xrpl.send({

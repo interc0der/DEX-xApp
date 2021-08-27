@@ -479,6 +479,9 @@ const actions = {
                         })
                 }
         }
+    },
+    resetOfferState: (context) => {
+        context.commit('resetOfferState')
     }
 }
 
@@ -674,6 +677,15 @@ const mutations = {
 
         const offerState = state.offers[seq]
         offerState.filledStatus = 'filled'
+    },
+    resetOfferState: (state) => {
+        console.log('Resetting Offers.js state')
+        state.offers = {}
+        state.openOfferSequences = []
+        state.createdNotAvailableSequences = []
+        state.currencyList = {
+            XRP: null
+        }
     }
 }
 
