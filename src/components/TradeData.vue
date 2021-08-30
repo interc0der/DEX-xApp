@@ -30,7 +30,7 @@
             <div class="table-container">
 
                 <template v-if="activeTabIndex === 0">
-                    <div class="order-item" v-for="(item, seq, index) in offers">
+                    <div class="order-item" v-for="(item, seq, index) in offers" :key="seq">
                         <div class="row" style="margin: 0; padding-left: 5px;">
                             <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item)">{{ getOrderTrade(item) }}</label>
                             <label v-else class="trade-label open">{{ 'open' }}</label>
