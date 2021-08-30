@@ -1,8 +1,14 @@
 <template>
     <table>
+        <!-- <colgroup>
+            <col span="1" style="width: 100px;">
+            <col span="1" style="width: 50%;">
+            <col span="1" style="width: 100%;">
+        </colgroup> -->
+
         <thead>
             <tr>
-                <th>TimeStamp</th>
+                <th style="width: 100px;">Time Stamp</th>
                 <!-- <th>Direction</th> -->
                 <th>Price</th>
                 <th>QTY</th>
@@ -61,19 +67,20 @@ export default {
 table {
     border-collapse: collapse;
     width: 100%;
+    margin-top: 10px;
     margin-bottom: 60px;
 }
 th {
     color: var(--grey);
     font-weight: 400;
-    font-size: 1rem;
+    font-size: 0.8rem;
 }
 tbody {
     text-align: center;
     font-size: 0.8rem;
 }
 tbody td {
-    height: 45px;
+    height: 40px;
 }
 tbody tr:nth-child(even) {
     background-color: var(--grey5);
