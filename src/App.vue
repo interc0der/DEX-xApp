@@ -69,9 +69,13 @@ export default {
 		try {
 			if (typeof window.ReactNativeWebView === 'undefined') {
                 const data = {
+                    // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg',
                     // account: 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm',
                     // nodetype: 'MAINNET',
-                    account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC',
+                    // account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
+                    // account: 'rpDpacp6FX4qXdaXHp8Tvt88CFewdCNEVw',
+                    // account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC',
+                    account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
                     nodetype: 'TESTNET'
                 }
                 client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
@@ -120,7 +124,7 @@ export default {
 :root {
     /* MOONLIGHT #181A21 */
     --var-primary: rgb(255, 159, 10);
-    --var-bg-color: #181A21;
+    --var-bg-color: #000;
     --var-bg-color-secondary: var(--grey4);
     --var-txt-color: white;
     --var-secondary: var(--grey5);
