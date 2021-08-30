@@ -30,8 +30,7 @@ export default {
         },
         trend() {
             return this.$store.getters.marketTrend
-        },
-
+        }
     },
     methods: {
         priceFormat
