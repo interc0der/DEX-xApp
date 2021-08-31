@@ -172,15 +172,17 @@ const actions = {
         if(payload.notify) console.log(tx)
     },
     changeBalance: (context, balancechanges) => {
-        console.log('Balance change parsing please...')
+        console.log('Balance changes:')
         console.log(balancechanges)
-        balancechanges.forEach(change => {
-            context.commit('changeBalanceValue', change)
-        })
     },
     onNodeChange: (context, node) => {
         node.FinalFields.index = node.LedgerIndex
-        context.commit('modifyObject', node.FinalFields)
+        if(node.LedgerEntryType === 'AccountRoot') {
+            console.log('AccountRoot please make changes')
+            context.commit('modifyAccountObject', node.FinalFields)
+        } else {
+            context.commit('modifyObject', node.FinalFields)
+        }
     },
     addObjectToAccount: (context, object) => {
         console.log('Add Object to account please...')
@@ -212,6 +214,12 @@ const mutations = {
     setAccountTransactions: (state, arr) => {
         state.accountTransactions = arr
     },
+    modifyAccountObject: (state, node) => {
+        if(state.accountInfo.index === node.index) {
+            state.accountInfo = _merge(state.accountInfo, node)
+            console.log('AccountRoot changed')
+        }
+    },
     modifyObject: (state, node) => {
         for(let i = 0; state.accountObjects.length > i; i++) {
             if(state.accountObjects[i].index === node.index) {
@@ -226,19 +234,10 @@ const mutations = {
         state.accountObjects.push(object)
     },
     removeObject: (state, objectToDelete) => {
-        // todo :: !!!
         state.accountObjects = state.accountObjects.filter(object => {
             if(object.index === objectToDelete.index) return false
             else return true
         })
-    },
-    changeBalanceValue: (state, currencyObj) => {
-        if(currencyObj.currency === 'XRP') {
-            let value = isNaN(currencyObj.value) ? 0 - currencyObj.fees : Number(currencyObj.value) - Number(currencyObj.fees)
-            state.accountInfo.Balance = Math.trunc( Number(state.accountInfo.Balance) + value )
-        } else {
-            // Todo iou/trustline/ripplestate balance
-        }
     }
 }
 
