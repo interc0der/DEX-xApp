@@ -211,6 +211,10 @@ const actions = {
                 }
             }
 
+            if(node.hasOwnProperty('ModifiedNode') && notification) {
+                context.dispatch('onNodeChange', node.ModifiedNode)
+            }
+
             // Offer Create
             if(node.CreatedNode?.LedgerEntryType === 'Offer') {
                 if(node.CreatedNode?.NewFields?.Account === account) {

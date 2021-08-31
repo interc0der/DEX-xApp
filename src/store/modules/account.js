@@ -1,4 +1,5 @@
 import xrpl from '../../plugins/ws-client'
+import _merge from 'lodash/merge'
 
 const state = {
     address: '',
@@ -38,27 +39,57 @@ const getters = {
     getAccountLines: state => {
         return state.accountLines
     },
-    // Todo ->
     getAccountFunds: state => (currency, issuer) => {
         if(state.accountInfo === null || typeof state.accountInfo === undefined) return null
+        if(state.accountObjects === null || typeof state.accountObjects === undefined) return null
+
         if(currency === 'XRP') {
-            if(state.accountObjects === null || typeof state.accountObjects === undefined) return null
-            if(typeof state.accountInfo === undefined || typeof state.accountInfo.Balance === undefined) return null
-            const accountReserve = 20000000
-            const reserved = state.accountObjects.length * 5000000
+            if(typeof state.accountInfo.Balance === undefined) return null
+            const accountReserve = 20_000_000
+            const reserved = state.accountObjects.length * 5_000_000
             const balance = (state.accountInfo.Balance - accountReserve - reserved)
             return balance
         } else {
-            if(!Array.isArray(state.accountLines)) return 0
-            if(state.accountLines.length < 1) return 0
-            for(const line of state.accountLines) {
-                if(line.account === issuer && line.currency === currency) {
-                    const balance = parseFloat(line.balance)
-                    return balance
+            if(!Array.isArray(state.accountObjects)) return null
+
+            for(let object of state.accountObjects) {
+                if(object.LedgerEntryType === 'RippleState') {
+                    if(object.LowLimit.currency === currency && object.LowLimit.issuer === issuer) {
+                        if(object.HighLimit.issuer === state.address) {
+                            return Math.abs(object.Balance.value)
+                        }
+                    } else if(object.HighLimit.currency === currency && object.HighLimit.issuer === issuer) {
+                        if(object.LowLimit.issuer === state.address) {
+                            return Math.abs(object.Balance.value)
+                        }
+                    }
                 }
+                continue
             }
+            return null
         }
     }
+    // Todo ->
+    // getAccountFunds: state => (currency, issuer) => {
+    //     if(state.accountInfo === null || typeof state.accountInfo === undefined) return null
+    //     if(currency === 'XRP') {
+    //         if(state.accountObjects === null || typeof state.accountObjects === undefined) return null
+    //         if(typeof state.accountInfo === undefined || typeof state.accountInfo.Balance === undefined) return null
+    //         const accountReserve = 20000000
+    //         const reserved = state.accountObjects.length * 5000000
+    //         const balance = (state.accountInfo.Balance - accountReserve - reserved)
+    //         return balance
+    //     } else {
+    //         if(!Array.isArray(state.accountLines)) return 0
+    //         if(state.accountLines.length < 1) return 0
+    //         for(const line of state.accountLines) {
+    //             if(line.account === issuer && line.currency === currency) {
+    //                 const balance = parseFloat(line.balance)
+    //                 return balance
+    //             }
+    //         }
+    //     }
+    // }
     // <- end
 }
 
@@ -147,6 +178,10 @@ const actions = {
             context.commit('changeBalanceValue', change)
         })
     },
+    onNodeChange: (context, node) => {
+        node.FinalFields.index = node.LedgerIndex
+        context.commit('modifyObject', node.FinalFields)
+    },
     addObjectToAccount: (context, object) => {
         console.log('Add Object to account please...')
         console.log(object)
@@ -176,6 +211,16 @@ const mutations = {
     },
     setAccountTransactions: (state, arr) => {
         state.accountTransactions = arr
+    },
+    modifyObject: (state, node) => {
+        for(let i = 0; state.accountObjects.length > i; i++) {
+            if(state.accountObjects[i].index === node.index) {
+                state.accountObjects[i] = _merge(state.accountObjects[i], node)
+                console.log(node)
+                console.log('Modify Done...')
+                break
+            }
+        }
     },
     addObject: (state, object) => {
         state.accountObjects.push(object)
