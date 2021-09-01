@@ -142,7 +142,7 @@ const actions = {
         }
 
         // only for testing todo delete
-        // if(tx.Sequence !== 19626395) {
+        // if(tx.Sequence !== 56678315) {
         //     return
         // } else {
         //     console.log(transaction)
@@ -185,7 +185,7 @@ const actions = {
                 context.commit('setOpenOfferObject', node.CreatedNode.NewFields)
             }
 
-            if(node.hasOwnProperty('CreatedNode') && (node.CreatedNode?.NewFields?.HighLimit?.issuer === account || node.CreatedNode?.NewFields?.LowLimit?.issuer || account) && notification) {
+            if(node.hasOwnProperty('CreatedNode') && (node.CreatedNode?.NewFields?.HighLimit?.issuer === account || node.CreatedNode?.NewFields?.LowLimit?.issuer === account) && notification) {
                 // If trustline Added
                 context.dispatch('addObjectToAccount', node.CreatedNode)
                 notify({
@@ -311,6 +311,27 @@ const actions = {
                     addBalance(accountRipple, balanceObj)
                 }
             }
+
+            if(node.CreatedNode?.LedgerEntryType === 'RippleState') {
+                if(!isNaN(node.CreatedNode.NewFields?.Balance?.value)) {
+                    let issuerRipple
+                    let accountRipple
+                    if( Math.sign(Number(node.CreatedNode.NewFields?.Balance?.value)) >= 0 ) {
+                        issuerRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                        accountRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                    } else {
+                        issuerRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                        accountRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                    }
+
+                    const balanceObj = {
+                        currency: node.CreatedNode.NewFields.Balance.currency,
+                        issuer: issuerRipple,
+                        value: node.CreatedNode.NewFields.Balance.value
+                    }
+                    addBalance(accountRipple, balanceObj)
+                }
+            }
         }
 
         if(tx.TransactionType === 'OfferCreate' && tx.Account === account && !offerChange && tx.TransactionResult === 'tesSUCCESS') {
@@ -339,6 +360,7 @@ const actions = {
                         }
                         break
                     case 'OfferCancel':
+                        if(tx.Account !== account) break
                         context.dispatch('notify', {
                             sequence: tx.OfferSequence,
                             type: 'cancel'
@@ -355,6 +377,12 @@ const actions = {
             if(notification) {
                 console.log('todo notify me please')
                 switch(tx.TransactionType) {
+                    case 'OfferCancel':
+                        context.dispatch('notify', {
+                            sequence: tx.OfferSequence,
+                            type: 'cancel'
+                        })
+                        break
                     case 'Payment':
                         if(tx.Account === account) {
                             notify({
@@ -632,7 +660,7 @@ const mutations = {
             })
 
             if(offerState.filledStatus !== 'filled') offerState.filledStatus = 'partially-filled'
-        } // else console.log('Offer mutation not on both sides')
+        } else console.log('Offer mutation not on both sides')
     },
     closedOffer: (state, seq) => {
         // Todo

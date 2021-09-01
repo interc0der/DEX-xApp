@@ -122,7 +122,6 @@ export default {
                 return list
             }
             return _merge(lines, list)
-            // return {...lines, ...list}
         },
         curatedCurrencies() {
             const obj = {}
@@ -157,10 +156,10 @@ export default {
                 array.forEach(line => {
                     if(typeof obj[line.currency] === 'undefined') {
                         obj[line.currency] = {
-                           [line.account]: line
+                           [line.issuer]: line
                         }
                     } else {
-                        obj[line.currency][line.account] = line
+                        obj[line.currency][line.issuer] = line
                     }
                 })
             }
@@ -215,7 +214,7 @@ export default {
             this.$store.dispatch('changeCurrencyPair', {
                 target: this.target,
                 amount: {
-                    issuer: line.account || line.issuer,
+                    issuer: line.issuer,
                     limit: line.limit || null,
                     currency: line.currency
                 } 
