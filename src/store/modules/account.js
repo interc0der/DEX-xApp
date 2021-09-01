@@ -163,6 +163,7 @@ const actions = {
         console.log(balancechanges)
     },
     onNodeChange: (context, node) => {
+        if(!node.hasOwnProperty('FinalFields')) return console.warn('Change object without FinalFields Object')
         node.FinalFields.index = node.LedgerIndex
         if(node.LedgerEntryType === 'AccountRoot') {
             console.log('AccountRoot please make changes')
@@ -172,14 +173,15 @@ const actions = {
         }
     },
     addObjectToAccount: (context, object) => {
+        if(!object.hasOwnProperty('NewFields')) return console.warn('Add object without NewFields Object')
         console.log('Add Object to account please...')
-        console.log(object)
         object.NewFields.index = object.LedgerIndex
+        object.NewFields.LedgerEntryType = object.LedgerEntryType
         context.commit('addObject', object.NewFields)
     },
     removeObjectFromAccount: (context, object) => {
+        if(!object.hasOwnProperty('FinalFields')) return console.warn('Delete object without FinalFields Object')
         console.log('Remove Object From account please...')
-        console.log(object)
         object.FinalFields.index = object.LedgerIndex
         context.commit('removeObject', object.FinalFields)
     },
@@ -199,7 +201,7 @@ const mutations = {
         state.accountTransactions = arr
     },
     modifyAccountObject: (state, node) => {
-        if(state.accountInfo.index === node.index) {
+        if(state.accountInfo?.index === node.index && node.index) {
             state.accountInfo = _merge(state.accountInfo, node)
             console.log('AccountRoot changed')
         }

@@ -175,163 +175,167 @@ const actions = {
             context.commit('setInitialOffer', tx)
         }
 
-        for(const node of meta.AffectedNodes) {
+        try {
+            for(const node of meta.AffectedNodes) {
 
-            if(node.hasOwnProperty('CreatedNode') && node.CreatedNode?.NewFields?.Account === account && notification) {
-                // increase/increment object reserve for account
-                context.dispatch('addObjectToAccount', node.CreatedNode)
+                if(node.hasOwnProperty('CreatedNode') && node.CreatedNode?.NewFields?.Account === account && notification) {
+                    // increase/increment object reserve for account
+                    context.dispatch('addObjectToAccount', node.CreatedNode)
 
-                // set offer to active
-                context.commit('setOpenOfferObject', node.CreatedNode.NewFields)
-            }
+                    // set offer to active
+                    context.commit('setOpenOfferObject', node.CreatedNode.NewFields)
+                }
 
-            if(node.hasOwnProperty('CreatedNode') && (node.CreatedNode?.NewFields?.HighLimit?.issuer === account || node.CreatedNode?.NewFields?.LowLimit?.issuer === account) && notification) {
-                // If trustline Added
-                context.dispatch('addObjectToAccount', node.CreatedNode)
-                notify({
-                    title: 'Created Trustline',
-                    type: 'success',
-                    text: `${currencyCodeFormat(node.CreatedNode?.NewFields?.HighLimit?.currency, 4)} - ${node.CreatedNode?.NewFields?.HighLimit?.issuer === account ? node.CreatedNode?.NewFields?.LowLimit?.issuer : node.CreatedNode?.NewFields?.HighLimit?.issuer}`,
-                })
-            }
-
-            if(node.hasOwnProperty('DeletedNode') && notification) {
-                // decrease object reserve
-                if(node.DeletedNode?.FinalFields?.Account === account) {
-                    // remove offer object
-                    context.dispatch('removeObjectFromAccount', node.DeletedNode)
-                } else if(node.DeletedNode?.FinalFields?.HighLimit?.issuer === account || node.DeletedNode?.FinalFields?.LowLimit?.issuer === account) {
-                    // remove if ripplestate/trustline/iou
-                    context.dispatch('removeObjectFromAccount', node.DeletedNode)
+                if(node.hasOwnProperty('CreatedNode') && (node.CreatedNode?.NewFields?.HighLimit?.issuer === account || node.CreatedNode?.NewFields?.LowLimit?.issuer === account) && notification) {
+                    // If trustline Added
+                    context.dispatch('addObjectToAccount', node.CreatedNode)
                     notify({
-                        title: 'Deleted Trustline',
+                        title: 'Created Trustline',
                         type: 'success',
-                        text: `${currencyCodeFormat(node.DeletedNode?.FinalFields?.HighLimit?.currency, 4)} - ${node.DeletedNode?.FinalFields?.HighLimit?.issuer === account ? node.DeletedNode?.FinalFields?.LowLimit?.issuer : node.DeletedNode?.FinalFields?.HighLimit?.issuer}`,
+                        text: `${currencyCodeFormat(node.CreatedNode?.NewFields?.HighLimit?.currency, 4)} - ${node.CreatedNode?.NewFields?.HighLimit?.issuer === account ? node.CreatedNode?.NewFields?.LowLimit?.issuer : node.CreatedNode?.NewFields?.HighLimit?.issuer}`,
                     })
                 }
-            }
 
-            if(node.hasOwnProperty('ModifiedNode') && notification) {
-                context.dispatch('onNodeChange', node.ModifiedNode)
-            }
-
-            // Offer Create
-            if(node.CreatedNode?.LedgerEntryType === 'Offer') {
-                if(node.CreatedNode?.NewFields?.Account === account) {
-                    offerChange = true
-                    offerChangedSequence = node.CreatedNode.NewFields.Sequence
+                if(node.hasOwnProperty('DeletedNode') && notification) {
+                    // decrease object reserve
+                    if(node.DeletedNode?.FinalFields?.Account === account) {
+                        // remove offer object
+                        context.dispatch('removeObjectFromAccount', node.DeletedNode)
+                    } else if(node.DeletedNode?.FinalFields?.HighLimit?.issuer === account || node.DeletedNode?.FinalFields?.LowLimit?.issuer === account) {
+                        // remove if ripplestate/trustline/iou
+                        context.dispatch('removeObjectFromAccount', node.DeletedNode)
+                        notify({
+                            title: 'Deleted Trustline',
+                            type: 'success',
+                            text: `${currencyCodeFormat(node.DeletedNode?.FinalFields?.HighLimit?.currency, 4)} - ${node.DeletedNode?.FinalFields?.HighLimit?.issuer === account ? node.DeletedNode?.FinalFields?.LowLimit?.issuer : node.DeletedNode?.FinalFields?.HighLimit?.issuer}`,
+                        })
+                    }
                 }
-            }
 
-            // Offer Cancel or filled
-            if(node.DeletedNode?.LedgerEntryType === 'Offer') {
-                if(node.DeletedNode?.FinalFields?.Account === account) {
-                    // TODO TakerPays & TakerGets value = 0 is filled else Part Filled???
-                    const sequence = node.DeletedNode.FinalFields.Sequence
-                    const PreviousTxnID = node.DeletedNode.FinalFields.PreviousTxnID
-                    
-                    if(tx.TransactionType !== 'OfferCancel') {
+                if(node.hasOwnProperty('ModifiedNode') && notification) {
+                    context.dispatch('onNodeChange', node.ModifiedNode)
+                }
+
+                // Offer Create
+                if(node.CreatedNode?.LedgerEntryType === 'Offer') {
+                    if(node.CreatedNode?.NewFields?.Account === account) {
+                        offerChange = true
+                        offerChangedSequence = node.CreatedNode.NewFields.Sequence
+                    }
+                }
+
+                // Offer Cancel or filled
+                if(node.DeletedNode?.LedgerEntryType === 'Offer') {
+                    if(node.DeletedNode?.FinalFields?.Account === account) {
+                        // TODO TakerPays & TakerGets value = 0 is filled else Part Filled???
+                        const sequence = node.DeletedNode.FinalFields.Sequence
+                        const PreviousTxnID = node.DeletedNode.FinalFields.PreviousTxnID
+                        
+                        if(tx.TransactionType !== 'OfferCancel') {
+                            offerChange = true
+                            offerChangedSequence = sequence
+                            
+                            context.commit('closedOffer', node.DeletedNode.FinalFields.Sequence)
+                            context.commit('setFilledState', sequence)
+                        } else {
+                            context.commit('canceledOffer', tx)
+                        }
+
+                        if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
+                            context.dispatch('getOfferTx', { PreviousTxnID: PreviousTxnID, Sequence: sequence } )
+                        }
+                    }
+                }
+            
+                if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
+                    if(node.ModifiedNode?.FinalFields?.Account === account) {
+                        const sequence = node.ModifiedNode.FinalFields.Sequence
+                        const PreviousTxnID = node.ModifiedNode.PreviousTxnID
+
                         offerChange = true
                         offerChangedSequence = sequence
+
+                        if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
+                            context.dispatch('getOfferTx', { PreviousTxnID, Sequence: sequence } )
+                        }
+                    }
+                }
+
+                if(node.ModifiedNode?.LedgerEntryType === 'AccountRoot') {
+                    if(node.ModifiedNode?.FinalFields?.Account === account) {
+                        // parse XRP amount
+                        let value = Number(node.ModifiedNode.FinalFields.Balance) - Number(node.ModifiedNode.PreviousFields.Balance) + Number(tx.Fee)
+
+                        if(value === 0) {
+                            // console.log('only fee paid no offerchanges')
+                            addBalance(node.ModifiedNode.FinalFields.Account, {
+                                currency: 'XRP',
+                                issuer: null,
+                                fees: Number(tx.Fee)
+                            })
+                        } else {
+                            addBalance(node.ModifiedNode.FinalFields.Account, {
+                                currency: 'XRP',
+                                issuer: null,
+                                value: value,
+                                fees: Number(tx.Fee)
+                            })
+                        }
+                    }
+                }
+
+                if(node.ModifiedNode?.LedgerEntryType === 'RippleState') {
+                    // parse IOU's
+                    if(!isNaN(node.ModifiedNode.FinalFields?.Balance?.value) && !isNaN(node.ModifiedNode.PreviousFields?.Balance?.value) ) {
+                        // HighLimit === issuer if balance positive else is account
+                        // LowLimit === account
+
+                        let issuerRipple
+                        let accountRipple
+                        if( Math.sign(Number(node.ModifiedNode.FinalFields?.Balance?.value)) >= 0 ) {
+                            issuerRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                            accountRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                        } else {
+                            issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                            accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                        }
                         
-                        context.commit('closedOffer', node.DeletedNode.FinalFields.Sequence)
-                        context.commit('setFilledState', sequence)
-                    } else {
-                        context.commit('canceledOffer', tx)
-                    }
 
-                    if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
-                        context.dispatch('getOfferTx', { PreviousTxnID: PreviousTxnID, Sequence: sequence } )
+                        let value = Number(node.ModifiedNode.FinalFields.Balance.value) - Number(node.ModifiedNode.PreviousFields?.Balance?.value)
+                        const balanceObj = {
+                            currency: node.ModifiedNode.FinalFields.Balance.currency,
+                            issuer: issuerRipple,
+                            value: value
+                        }
+
+                        // addBalance(issuerRipple, balanceObj)
+                        addBalance(accountRipple, balanceObj)
+                    }
+                }
+
+                if(node.CreatedNode?.LedgerEntryType === 'RippleState') {
+                    if(!isNaN(node.CreatedNode.NewFields?.Balance?.value)) {
+                        let issuerRipple
+                        let accountRipple
+                        if( Math.sign(Number(node.CreatedNode.NewFields?.Balance?.value)) >= 0 ) {
+                            issuerRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                            accountRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                        } else {
+                            issuerRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                            accountRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                        }
+
+                        const balanceObj = {
+                            currency: node.CreatedNode.NewFields.Balance.currency,
+                            issuer: issuerRipple,
+                            value: node.CreatedNode.NewFields.Balance.value
+                        }
+                        addBalance(accountRipple, balanceObj)
                     }
                 }
             }
-          
-            if(node.ModifiedNode?.LedgerEntryType === 'Offer') {
-                if(node.ModifiedNode?.FinalFields?.Account === account) {
-                    const sequence = node.ModifiedNode.FinalFields.Sequence
-                    const PreviousTxnID = node.ModifiedNode.PreviousTxnID
-
-                    offerChange = true
-                    offerChangedSequence = sequence
-
-                    if(!context.state.offers.hasOwnProperty(sequence) || !context.state.offers[sequence]?.hasOfferCreateData) {
-                        context.dispatch('getOfferTx', { PreviousTxnID, Sequence: sequence } )
-                    }
-                }
-            }
-
-            if(node.ModifiedNode?.LedgerEntryType === 'AccountRoot') {
-                if(node.ModifiedNode?.FinalFields?.Account === account) {
-                    // parse XRP amount
-                    let value = Number(node.ModifiedNode.FinalFields.Balance) - Number(node.ModifiedNode.PreviousFields.Balance) + Number(tx.Fee)
-
-                    if(value === 0) {
-                        // console.log('only fee paid no offerchanges')
-                        addBalance(node.ModifiedNode.FinalFields.Account, {
-                            currency: 'XRP',
-                            issuer: null,
-                            fees: Number(tx.Fee)
-                        })
-                    } else {
-                        addBalance(node.ModifiedNode.FinalFields.Account, {
-                            currency: 'XRP',
-                            issuer: null,
-                            value: value,
-                            fees: Number(tx.Fee)
-                        })
-                    }
-                }
-            }
-
-            if(node.ModifiedNode?.LedgerEntryType === 'RippleState') {
-                // parse IOU's
-                if(!isNaN(node.ModifiedNode.FinalFields?.Balance?.value) && !isNaN(node.ModifiedNode.PreviousFields?.Balance?.value) ) {
-                    // HighLimit === issuer if balance positive else is account
-                    // LowLimit === account
-
-                    let issuerRipple
-                    let accountRipple
-                    if( Math.sign(Number(node.ModifiedNode.FinalFields?.Balance?.value)) >= 0 ) {
-                        issuerRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
-                        accountRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
-                    } else {
-                        issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
-                        accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
-                    }
-                    
-
-                    let value = Number(node.ModifiedNode.FinalFields.Balance.value) - Number(node.ModifiedNode.PreviousFields?.Balance?.value)
-                    const balanceObj = {
-                        currency: node.ModifiedNode.FinalFields.Balance.currency,
-                        issuer: issuerRipple,
-                        value: value
-                    }
-
-                    // addBalance(issuerRipple, balanceObj)
-                    addBalance(accountRipple, balanceObj)
-                }
-            }
-
-            if(node.CreatedNode?.LedgerEntryType === 'RippleState') {
-                if(!isNaN(node.CreatedNode.NewFields?.Balance?.value)) {
-                    let issuerRipple
-                    let accountRipple
-                    if( Math.sign(Number(node.CreatedNode.NewFields?.Balance?.value)) >= 0 ) {
-                        issuerRipple = node.CreatedNode.NewFields.HighLimit.issuer
-                        accountRipple = node.CreatedNode.NewFields.LowLimit.issuer
-                    } else {
-                        issuerRipple = node.CreatedNode.NewFields.LowLimit.issuer
-                        accountRipple = node.CreatedNode.NewFields.HighLimit.issuer
-                    }
-
-                    const balanceObj = {
-                        currency: node.CreatedNode.NewFields.Balance.currency,
-                        issuer: issuerRipple,
-                        value: node.CreatedNode.NewFields.Balance.value
-                    }
-                    addBalance(accountRipple, balanceObj)
-                }
-            }
+        } catch(e) {
+            console.log(e)
         }
 
         if(tx.TransactionType === 'OfferCreate' && tx.Account === account && !offerChange && tx.TransactionResult === 'tesSUCCESS') {
