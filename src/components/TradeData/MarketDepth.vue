@@ -1,33 +1,38 @@
 <template>
-    <Chart :options="chartOptions" />
-    <div class="table-wrapper">
-        <div id="order-book-data-table-container">
-            <div class="order-book-table-row table-headers">
-                <div class="order-book-column row-bids">
-                    <span>Quantity</span>
-                    <span>Bid Price</span>
+    <template v-if="chartDataAsk.length > 0 || chartDataBids.length > 0">
+        <Chart :options="chartOptions" />
+        <div class="table-wrapper">
+            <div id="order-book-data-table-container">
+                <div class="order-book-table-row table-headers">
+                    <div class="order-book-column row-bids">
+                        <span>Quantity</span>
+                        <span>Bid Price</span>
+                    </div>
+                    <div class="order-book-column row-asks">
+                        <span>Ask Price</span>
+                        <span>Quantity</span>
+                    </div>
                 </div>
-                <div class="order-book-column row-asks">
-                    <span>Ask Price</span>
-                    <span>Quantity</span>
-                </div>
-            </div>
-            <div class="order-book-table-row" v-for="index in maxRows">
-                <div class="order-book-column row-bids">
-                    <template v-if="bidsList[index - 1]">
-                        <span class="number">{{ quantityFormat(bidsList[index - 1].quantity, currencyPair.base.currency) }}</span>
-                        <span class="number buy">{{ bidsList[index - 1].price }}</span>
-                    </template>
-                </div>
-                <div class="order-book-column row-asks">
-                    <template v-if="asksList[index - 1]">
-                        <span class="number sell">{{ asksList[index - 1].price }}</span>
-                        <span class="number">{{ quantityFormat(asksList[index - 1].quantity, currencyPair.base.currency) }}</span>
-                    </template>
+                <div class="order-book-table-row" v-for="index in maxRows">
+                    <div class="order-book-column row-bids">
+                        <template v-if="bidsList[index - 1]">
+                            <span class="number">{{ quantityFormat(bidsList[index - 1].quantity, currencyPair.base.currency) }}</span>
+                            <span class="number buy">{{ bidsList[index - 1].price }}</span>
+                        </template>
+                    </div>
+                    <div class="order-book-column row-asks">
+                        <template v-if="asksList[index - 1]">
+                            <span class="number sell">{{ asksList[index - 1].price }}</span>
+                            <span class="number">{{ quantityFormat(asksList[index - 1].quantity, currencyPair.base.currency) }}</span>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
+    <template v-else>
+        No orderbook data
+    </template>
 </template>
 
 <script>
@@ -194,6 +199,8 @@ export default {
         },
         chartDataAsk() {
             const array = []
+            if(!this.orderBookData.hasOwnProperty('asks')) return array
+
             this.orderBookData.asks.forEach(entry => {
                 let total = entry.total
                 if(this.currencyPair.base.currency === 'XRP') total = Number(entry.total) / 1_000_000
@@ -203,7 +210,9 @@ export default {
             // return [[0.1435,242.521842],[0.1436,206.49862099999999],[0.1437,205.823735],[0.1438,197.33275],[0.1439,153.677454],[0.144,146.007722],[0.1442,82.55212900000001],[0.1443,59.152814000000006],[0.1444,57.942260000000005],[0.1445,57.483850000000004],[0.1446,52.39210800000001],[0.1447,51.867208000000005],[0.1448,44.104697],[0.1449,40.131217],[0.145,31.878217],[0.1451,22.794916999999998],[0.1453,12.345828999999998],[0.1454,10.035642],[0.148,9.326642],[0.1522,3.76317]]
         },
         chartDataBids() {
-            const array = [] 
+            const array = []
+            if(!this.orderBookData.hasOwnProperty('bids')) return array
+
             this.orderBookData.bids.forEach(entry => {
                 let total = entry.total
                 if(this.currencyPair.base.currency === 'XRP') total = Number(entry.total) / 1_000_000
