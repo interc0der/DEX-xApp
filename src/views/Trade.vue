@@ -4,6 +4,7 @@
         <hr>
         <div class="row padding">
             <TradeForm />
+            <hr class="vertical-devider">
             <OrderBook />
         </div>
         <hr class="spacer">
@@ -31,5 +32,10 @@ hr.spacer {
     border: none;
     width: 110%;
     height: 20px;
+}
+hr.vertical-devider {
+    height: 100%;
+    width: 15px;
+    border: none;
 }
 </style>

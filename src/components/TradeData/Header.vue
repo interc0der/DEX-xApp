@@ -47,6 +47,7 @@ export default {
 .row.header {
     margin-left: 5px;
     padding-bottom: 8px;
+    height: 30px;
 }
 .header-btn {
     width: 30px;
