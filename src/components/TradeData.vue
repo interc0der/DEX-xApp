@@ -100,11 +100,6 @@ export default {
             return this.$store.getters.getOfferHistoryByCurrencyPair(this.tradingPair)
         }
     },
-    watch: {
-        account: function () {
-            this.setOpenOffers()
-        }
-    },
     methods: {
         openTradeDataView() {
             this.$emitter.emit('changeView', 'data')
@@ -191,21 +186,6 @@ export default {
                 return 0
             }
             return price
-        },
-        async setOpenOffers() {
-            try {
-                if(xapp.getAccountData() === null) throw { msg: 'Account not activated', error: false}
-                else this.$store.dispatch('setOpenOffers')
-            } catch(e) {
-                if(e.error !== false) {
-                    this.$emitter.emit('modal', {
-                        type: 'error',
-                        title: this.$t('xapp.error.modal_title'),
-                        text: this.$t('xapp.error.get_offer_data'),
-                        buttonText: this.$t('xapp.button.close')
-                    })
-                }
-            }
         }
     }
 }
