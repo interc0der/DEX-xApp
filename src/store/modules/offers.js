@@ -85,7 +85,6 @@ const actions = {
         objects.forEach(offer => {
             context.commit('setOpenOfferObject', offer)
         })
-        return
     },
     setOfferHistory: (context, txs) => {
         txs.forEach(transaction => {
@@ -299,7 +298,6 @@ const actions = {
                             issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
                             accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
                         }
-                        
 
                         let value = Number(node.ModifiedNode.FinalFields.Balance.value) - Number(node.ModifiedNode.PreviousFields?.Balance?.value)
                         const balanceObj = {
@@ -371,7 +369,8 @@ const actions = {
                         })
                         break
                     case 'Payment':
-                        // todo :: Check if is payment or hit an offer sequence also check if is in state
+                        offerChanges['type'] = 'mutation'
+                        context.dispatch('notify', offerChanges)
                         break
                     default:
                         console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
@@ -405,6 +404,8 @@ const actions = {
                         break
                     case 'TrustSet':
                         break
+                    default:
+                        console.log('TX TYPE NOT IN SWITCH VUEX: ' + tx.TransactionType)
                 }
             }
         }
