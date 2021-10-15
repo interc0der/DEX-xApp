@@ -26,10 +26,12 @@ import { priceFormat } from '../../plugins/number-format'
 export default {
     computed: {
         marketPrice() {
-            return this.$store.getters.getMarketPrice
+            if(this.$store.getters.getLastTradedPrice > 0) return this.$store.getters.getLastTradedPrice
+            else return this.$store.getters.getMarketPrice
         },
         trend() {
-            return this.$store.getters.marketTrend
+            if(this.$store.getters.getMarketTrend !== null) return this.$store.getters.getMarketTrend
+            else return this.$store.getters.marketTrend
         }
     },
     methods: {
