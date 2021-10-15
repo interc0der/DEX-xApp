@@ -229,7 +229,7 @@ export default {
                         issuer: null,
                         limit: null,
                         currency: 'XRP'
-                    } 
+                    }
                 })
                 return 
             }
