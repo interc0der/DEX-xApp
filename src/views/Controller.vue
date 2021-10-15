@@ -1,7 +1,7 @@
 <template>
     <Trade v-show="activeComponent === 'trade'"/>
     <Events v-show="activeComponent === 'events'"/>
-    <Data v-if="activeComponent === 'data'"/>
+    <Data v-show="activeComponent === 'data'"/>
 </template>
 
 <script>
@@ -18,9 +18,15 @@ export default {
     },
     created() {
         this.$emitter.on('changeView', (view) => {
+            if(view === 'data') this.$store.dispatch('getChartData')
             this.activeComponent = view
         })
+
         this.$store.dispatch('getOrderBookData')
+
+        this.$emitter.on('changedCurrency', data => {
+            this.$store.dispatch('getOrderBookData')
+        })
     }
 }
 </script>

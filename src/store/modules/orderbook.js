@@ -1,12 +1,16 @@
-import client from '../../plugins/ws-client'
+import client from '../../plugins/ws-client-secondary'
 import { quantityFormat, priceFormat } from '../../plugins/number-format'
 
 import orderBookParser from '../../plugins/orderbook-parser'
 
+import { parseOrderbookChanges, parseBalanceChanges } from 'ripple-lib-transactionparser'
+
 const state = {
     ready: false,
     asks: [],
-    bids: []
+    bids: [],
+    secondToLastTradedPrice: null,
+    lastTradedPrice: null
 }
 
 const getters = {
@@ -18,49 +22,246 @@ const getters = {
     },
     getOrderBookReadyState: state => {
         return state.ready
+    },
+    getLastTradedPrice: state => {
+        return state.lastTradedPrice
+    },
+    getSecondToLastTradedPrice: state => {
+        return state.secondToLastTradedPrice
+    },
+    getMarketTrend: state => {
+        if(!state.secondToLastTradedPrice) return null
+        if(state.lastTradedPrice > state.secondToLastTradedPrice) {
+            return true
+        } else {
+            return false
+        }
     }
 }
 
 const actions = {
     getOrderBookData: async (context, resetReadyState) => {
         if(resetReadyState) context.commit('isReady', false)
-        await Promise.all([context.dispatch('setSellSide'), context.dispatch('setBuySide')])
+        // await Promise.all([context.dispatch('setSellSide'), context.dispatch('setBuySide')])
+        await context.dispatch('subscribeToBook')
         return context.commit('isReady', true)
     },
-    setSellSide: async (context, payload) => {
+    subscribeToBook: async (context, payload) => {
+        // todo unsubscribe & on book???
         const tradingPair = context.rootGetters.getCurrencyPair
 
-        const dataSell = await client.send({
-            command: 'book_offers',
-            taker_gets: {
-                currency: tradingPair.base.currency,
-                issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
-            },
-            taker_pays: {
-                currency: tradingPair.quote.currency,
-                issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
-            }
+        const orderBook = await client.send({
+            id: 'book',
+            command: 'subscribe',
+            books: [
+                {
+                    taker_pays: {
+                        currency: tradingPair.base.currency,
+                        issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+                    },
+                    taker_gets: {
+                        currency: tradingPair.quote.currency,
+                        issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
+                    },
+                    snapshot: true,
+                    both: true
+                }
+            ]
         })
-        const askBook = dataSell.offers
-        return context.commit('setAskOrders', askBook)
+        if(orderBook.hasOwnProperty('result')) {
+            context.commit('setAskOrders', orderBook.result.asks)
+            context.commit('setBidOrders', orderBook.result.bids)
+        }
     },
-    setBuySide: async (context, payload) => {
+    parseOrderBookChanges: (context, payload) => {
+        const tx = payload.tx
+
+        // console.log(tx)
+
+        // console.log(parseBalanceChanges(tx.meta))
+
         const tradingPair = context.rootGetters.getCurrencyPair
 
-        const dataBuy = await client.send({
-            command: 'book_offers',
-            taker_gets: {
-                currency: tradingPair.quote.currency,
-                issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
-            },
-            taker_pays: {
-                currency: tradingPair.base.currency,
-                issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+        const array = tx?.meta?.AffectedNodes
+        if(!Array.isArray(array)) return console.warn('No metadata')
+
+        const epochToDate = (epoch) => {
+            let date = new Date('2000-01-01T00:00:00Z')
+            date.setUTCSeconds(epoch)
+
+            return date.toJSON()
+        }
+        
+        const changes = parseBalanceChanges(tx.meta)
+
+        let tradeUpdates = []
+        // let direction = null
+
+        for(let party in changes) {
+            if(party === tx.transaction.Account) {
+                // todo
+                // const accountChangesCreatedArray = changes[tx.transaction.Account]
+                // if(accountChangesCreatedArray.length > 1) {
+                //     for(let line of accountChangesCreatedArray) {
+                //         if( (line.counterparty === tradingPair.base.issuer && line.currency === tradingPair.base.currency) || (line.currency === 'XRP' && tradingPair.base.currency === 'XRP') ) {
+                //             baseObject = line
+                //         }
+                //         if( (line.counterparty === tradingPair.quote.issuer && line.currency === tradingPair.quote.currency) || (line.currency === 'XRP' && tradingPair.quote.currency === 'XRP') ) {
+                //             quoteObject = line
+                //         }
+                //     }
+                //     direction = changes[tx.transaction.Account]
+                // }
+
+                // console.log('Skip: look into other accounts for trading history than it\'s creator')
+                continue
+            }
+
+            let baseObject = null
+            let quoteObject = null
+            // if party & account equals transaction make sure fee is deducted or added to amount for price calculations
+            for(let line of changes[party]) {
+                if(line.currency === 'XRP' && party === tx.transaction.Account) {
+                    // todo unreachable, the account who offercrete skip at this moment
+                    // value with fess
+                    line.grossValue = line.value
+
+                    let valDrops = Math.trunc(Number(line.value) * 1_000_000)
+                    line.value = (valDrops + Number(tx.transaction.Fee)) / 1_000_000
+                }
+
+                if( (line.counterparty === tradingPair.base.issuer && line.currency === tradingPair.base.currency) || (line.currency === 'XRP' && tradingPair.base.currency === 'XRP') ) {
+                    baseObject = line
+                }
+                if( (line.counterparty === tradingPair.quote.issuer && line.currency === tradingPair.quote.currency) || (line.currency === 'XRP' && tradingPair.quote.currency === 'XRP') ) {
+                    quoteObject = line
+                }
+
+                if(tradingPair.base.issuer === party || (line.currency === 'XRP' && tradingPair.base.currency === 'XRP')) {
+                    if(line.currency === tradingPair.base.currency) {
+                        baseObject = line
+                    }
+                }
+
+                if(tradingPair.quote.issuer === party || (line.currency === 'XRP' && tradingPair.quote.currency === 'XRP')) {
+                    if(line.currency === tradingPair.quote.currency) {
+                        quoteObject = line
+                    }
+                }
+            }
+
+            if(!baseObject || !quoteObject) {
+                // console.log('skip: No base or quote')
+                baseObject = null
+                quoteObject = null
+                continue
+            }
+            console.log({baseObject, quoteObject})
+
+            try {
+                const newTrade = {
+                    base_amount: Math.abs(baseObject.value),
+                    base_currency: baseObject.currency,
+                    base_issuer: baseObject.currency === 'XRP' ? null : baseObject.counterparty,
+        
+                    counter_amount: Math.abs(quoteObject.value),
+                    counter_currency: quoteObject.currency,
+                    counter_issuer: quoteObject.currency === 'XRP' ? null : baseObject.counterparty,
+        
+                    rate: Number(Math.abs(quoteObject.value)) / Number(Math.abs(baseObject.value)),
+                    executed_date: tx?.transaction?.date,
+                    executed_time: epochToDate(tx?.transaction?.date),
+                    direction: null
+                    // ledger_index: 0,
+                    // node_index: 0,
+                    // offer_sequence: 0,
+                    // provider: "rpXhhWmCvDwkzNtRbm7mmD1vZqdfatQNEe",
+                    // seller: "rpMwusB1JD8PYYJwrw5qT65pgDMx3rLcEe",
+                    // buyer: null,
+                    // taker: "rpMwusB1JD8PYYJwrw5qT65pgDMx3rLcEe",
+                    // tx_hash: null,
+                    // tx_index: 0,
+                    // tx_type: "OfferCreate"
+                }
+                if(newTrade.base_amount < 0 && newTrade.counter_amount > 0) newTrade.direction = 'sell'
+                else if(newTrade.base_amount > 0 && newTrade.counter_amount < 0) newTrade.direction = 'buy'
+                else if(newTrade.base_currency === 'XRP' && newTrade.base_amount <= 0 && newTrade.counter_amount < 0) newTrade.direction = 'buy'
+                else if(newTrade.counter_currency === 'XRP' && newTrade.counter_amount <= 0 && newTrade.base_amount < 0) newTrade.direction = 'buy'
+                else newTrade.direction = 'undefined'
+                tradeUpdates.push(newTrade)
+
+                baseObject = null
+                quoteObject = null
+            } catch(e) { console.warn(e) }
+        }
+
+        tradeUpdates.sort((a, b) => {
+            if(tradeUpdates[0].direction === 'buy') {
+                // lowest first highest last
+                return a.rate - b.rate
+            } else {
+                return b.rate - a.rate
             }
         })
-        const bidBook = dataBuy.offers
-        return context.commit('setBidOrders', bidBook)
+
+        for(let updateItem of tradeUpdates) {
+            context.commit('updateLastTradedPrice', updateItem.rate)
+            context.dispatch('pushTxToTradeHistory', updateItem)
+            payload.emitter.emit('tradeDataUpdate', updateItem)
+            // if (updateItem.base_currency === 'XRP' || updateItem.counter_currency === 'XRP') {
+                // if( (baseObject.grossValue <= 0 || baseObject.value <= 0) && (quoteObject.grossValue <= 0 || quoteObject.value <= 0) ) {
+                //     console.log('Do not update market price: both values negative')
+                // }
+                // else if( (baseObject.grossValue >= 0 || baseObject.value >= 0) && (quoteObject.grossValue >= 0 || quoteObject.value >= 0) ) {
+                //     console.log('Do not update market price: both values positive')
+                // }
+                // else {
+                    // context.commit('updateLastTradedPrice', updateItem.rate)
+                // }
+                // context.dispatch('pushTxToTradeHistory', updateItem)
+            // } else {
+            //     context.commit('updateLastTradedPrice', updateItem.rate)
+            //     context.dispatch('pushTxToTradeHistory', updateItem)
+            // }
+        }
+    },
+    flipPrices: (context) => {
+        context.commit('flipMarket')
     }
+    // setSellSide: async (context, payload) => {
+    //     const tradingPair = context.rootGetters.getCurrencyPair
+
+    //     const dataSell = await client.send({
+    //         command: 'book_offers',
+    //         taker_gets: {
+    //             currency: tradingPair.base.currency,
+    //             issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+    //         },
+    //         taker_pays: {
+    //             currency: tradingPair.quote.currency,
+    //             issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
+    //         }
+    //     })
+    //     const askBook = dataSell.offers
+    //     return context.commit('setAskOrders', askBook)
+    // },
+    // setBuySide: async (context, payload) => {
+    //     const tradingPair = context.rootGetters.getCurrencyPair
+
+    //     const dataBuy = await client.send({
+    //         command: 'book_offers',
+    //         taker_gets: {
+    //             currency: tradingPair.quote.currency,
+    //             issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
+    //         },
+    //         taker_pays: {
+    //             currency: tradingPair.base.currency,
+    //             issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+    //         }
+    //     })
+    //     const bidBook = dataBuy.offers
+    //     return context.commit('setBidOrders', bidBook)
+    // }
 }
 
 const mutations = {
@@ -72,6 +273,17 @@ const mutations = {
     },
     isReady: (state, bool) => {
         state.ready = bool
+    },
+    updateLastTradedPrice: (state, price) => {
+        console.log(`Price Update: ${price}`)
+
+        if(state.lastTradedPrice > 0) state.secondToLastTradedPrice = state.lastTradedPrice
+        state.lastTradedPrice = price
+    },
+    flipMarket: (state) => {
+        console.log('flip market prices')
+        if(state.lastTradedPrice > 0) state.lastTradedPrice = Math.pow(state.lastTradedPrice, -1)
+        if(state.secondToLastTradedPrice > 0) state.secondToLastTradedPrice = Math.pow(state.secondToLastTradedPrice, -1)
     }
 }
 

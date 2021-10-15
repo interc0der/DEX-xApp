@@ -70,10 +70,12 @@ export default {
             return this.$store.getters.getCurrencyPair
         },
         marketPrice() {
-            return this.$store.getters.getMarketPrice
+            if(this.$store.getters.getLastTradedPrice > 0) return this.$store.getters.getLastTradedPrice
+            else return this.$store.getters.getMarketPrice
         },
         marketTrend() {
-            return this.$store.getters.marketTrend
+            if(this.$store.getters.getMarketTrend !== null) return this.$store.getters.getMarketTrend
+            else return this.$store.getters.marketTrend
         }
     },
     methods: {
@@ -162,18 +164,21 @@ export default {
         }
     },
     mounted() {
-        this.$store.dispatch('getOrderBookData')
+        // this.$store.dispatch('getOrderBookData')
         this.liquidityCheck()
 
         let self = this
+
+        // Todo
         client.on('ledger', () => {
-            self.$store.dispatch('getOrderBookData')
-            self.$store.dispatch('setLastTradedPrice')
+            // self.$store.dispatch('getOrderBookData')
+            // self.$store.dispatch('setLastTradedPrice')
         })
 
         this.$emitter.on('changedCurrency', data => {
             // Todo: No emitter 
             self.liquidityCheck()
+            self.$store.dispatch('getOrderBookData')
         })
     }
 }

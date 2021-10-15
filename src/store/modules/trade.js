@@ -57,7 +57,12 @@ const actions = {
     },
     changeCurrencyPair: (context, obj) => {
         context.commit('setCurrencyPair', obj)
+        // todo
         context.dispatch('setLastTradedPrice')
+        
+        if(obj.target === 'switch') context.dispatch('flipPrices')
+        
+        // Flip??
         context.dispatch('getTradeHistory')
         context.dispatch('getOrderBookData', true)
         return
@@ -111,6 +116,9 @@ const actions = {
             console.error(e)
         }
     },
+    pushTxToTradeHistory: (context, payload) => {
+        context.commit('pushTxToTradeHistory', payload)
+    },
     setLastTradedPrice: async (context, bool) => {
         const currencyPair = context.getters.getCurrencyPair
 
@@ -160,6 +168,9 @@ const mutations = {
         } else {
             state.marketTrend = -1
         }
+    },
+    pushTxToTradeHistory: (state, item) => {
+        state.tradeHistory.unshift(item)
     },
     toggleSafeMarket: (state, bool) => {
         state.isSafe = bool

@@ -24,6 +24,8 @@ import Test from '@/components/Test.vue'
 import xapp from './plugins/xapp'
 import client from './plugins/ws-client'
 
+import client2 from './plugins/ws-client-secondary'
+
 export default {
 	name: 'App',
 	components: {
@@ -45,8 +47,40 @@ export default {
 		}
 	},
 	methods: {
-		subscribe() {},
-		getTokenData() {},
+		async wsConnect(data) {
+            try {
+                if(!data) data = await xapp.getTokenData()
+                client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
+
+                // Todo wait on issue https://github.com/ripple/rippled/issues/3934
+                client2.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
+
+                this.$store.dispatch('setAccount', data.account)
+                this.error = false
+                this.ready = true
+            } catch(e) {
+                this.error = this.$t('xapp.error.subscribe_to_ledger')
+                alert(this.error)
+                throw e
+            }
+        },
+		async getTokenData() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search)
+                const ott = urlParams.get('xAppToken')
+                const data = await xapp.getTokenData(ott)
+
+                if(this.error === this.$t('xapp.error.get_ott_data')) {
+                    this.error = false
+                    this.wsConnect(data)
+                }
+
+                return data
+            } catch(e) {
+                this.error = this.$t('xapp.error.get_ott_data')
+                throw e
+            }
+        },
 		completedTest(bool) {
 			if(!bool) return
 			this.init = true
@@ -72,43 +106,43 @@ export default {
                     // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg',
                     // account: 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm',
                     // nodetype: 'MAINNET',
-                    // account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
                     // account: 'rpDpacp6FX4qXdaXHp8Tvt88CFewdCNEVw',
                     // account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC',
                     account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
                     nodetype: 'TESTNET'
                 }
                 client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
+                // todo delete if issue is resolved
+                client2.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
 				this.$store.dispatch('setAccount', data.account)
+                this.ready = true
             } else {
-                try {
-					const urlParams = new URLSearchParams(window.location.search)
-					const ott = urlParams.get('xAppToken')
-                    const data = await xapp.getTokenData(ott)
-                } catch(e) {
-                    this.error = this.$t('xapp.error.get_ott_data')
-                    throw e
-                }
-                try {
-                    const data = await xapp.getTokenData()
-                    client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-                    this.$store.dispatch('setAccount', data.account)
-                } catch(e) {
-                    alert('Websocket problem')
-                    throw e
-                }
+                const data = await this.getTokenData()
+                await this.wsConnect(data)
             }
-		} catch(e) {}
+		} catch(e) { return }
+
         this.ready = true
 
-		client.send({
-			command: 'subscribe',
-			accounts: [this.$store.getters.getAccount]
-		})
+        try {
+            client.send({
+                command: 'subscribe',
+                accounts: [this.$store.getters.getAccount]
+            })
+        } catch(e) {
+            this.error = this.$t('xapp.error.subscribe_to_account')
+            alert(this.error)
+        }
 
 		client.on('transaction', tx => {
+            // Next line is used to parse account subscribe txn
 			this.$store.dispatch('parseTx', { transaction: tx, notify: true })
+            
 		})
+
+        client2.on('transaction', tx => {
+            this.$store.dispatch('parseOrderBookChanges', { tx, emitter: this.$emitter })
+        })
 	},
     beforeUnmount() {
         this.$emitter.all.clear()

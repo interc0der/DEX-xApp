@@ -16,15 +16,28 @@
         </thead>
 
         <tbody v-if="tradeHistory.length > 0">
-            <tr v-for="(iteration, index) in (tradeHistory.length - 1)">
-                <td class="number">{{ formatTime(tradeHistory[index].executed_time) }}</td>
-                <!-- <td class="sell">NA</td> -->
-                <td :class="{'buy': tradeHistory[index + 1].rate < tradeHistory[index].rate, 'sell': !tradeHistory[index + 1].rate < tradeHistory[index].rate}" class="number">
-                    {{ priceFormat(tradeHistory[index].rate) }}
-                    <fa v-if="tradeHistory[index + 1].rate < tradeHistory[index].rate" class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
-                    <fa v-else class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-down']" />
-                </td>
-                <td class="number">{{ quantityFormat(tradeHistory[index].base_amount) }}</td>
+            <tr v-for="(item, index) in tradeHistory">
+
+                <!-- Last in Array -->
+                <template v-if="index === (tradeHistory.length - 1)">
+                    <td class="number">{{ formatTime(tradeHistory[index]?.executed_time) }}</td>
+                    <td class="number buy">
+                        {{ priceFormat(tradeHistory[index]?.rate) }}
+                        <fa class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
+                    </td>
+                    <td class="number">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
+                </template>
+
+                <template v-else>
+                    <td class="number">{{ formatTime(tradeHistory[index].executed_time) }}</td>
+                    <!-- <td class="sell">NA</td> -->
+                    <td :class="{'buy': tradeHistory[index + 1].rate < tradeHistory[index].rate, 'sell': !tradeHistory[index + 1].rate < tradeHistory[index].rate}" class="number">
+                        {{ priceFormat(tradeHistory[index].rate) }}
+                        <fa v-if="tradeHistory[index + 1].rate < tradeHistory[index]?.rate" class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
+                        <fa v-else class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-down']" />
+                    </td>
+                    <td class="number">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
+                </template>
             </tr>
         </tbody>
         <div v-else>
@@ -90,5 +103,8 @@ tbody tr:nth-child(even) {
 }
 .buy {
     color: var(--green);
+}
+.neutral {
+    color: var(--orange);
 }
 </style>
