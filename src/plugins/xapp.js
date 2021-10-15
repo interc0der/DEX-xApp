@@ -4,28 +4,19 @@ let tokenData
 let jwt
 let curatedAssets
 
-const apiEndPoint = process.env.VUE_APP_API_ENDPOINT
+const apiEndPoint = 'https://xumm.app/api/v1/xapp-jwt'
 const apiKey = process.env.VUE_APP_XAPP_KEY
 
-const accessToken = () => {
-    if(jwt) return jwt
-    else {
-        jwt = tokenData.token
-        return jwt
-    }
-}
-
-const headers = (getJWT) => {
-    if(getJWT) return { headers: { 'x-api-key': apiKey } }
-    else return { headers: { Authorization: accessToken(), 'x-api-key': apiKey } }
+const headers = () => {
+    return { headers: { Authorization: `Bearer ${jwt}` } }
 }
 
 const getTokenData = async (ott) => {
     if(!tokenData) {
         try {
-            const res = await axios.get(`${apiEndPoint}/xapp/ott/${ott}`, headers(true))
-            tokenData = res.data
-            jwt = res.data.token
+            const res = await axios.get(`${apiEndPoint}/authorize`, { headers: { 'x-api-key': apiKey, 'x-api-ott': ott } })
+            tokenData = res.data.ott
+            jwt = res.data.jwt
             return tokenData
         } catch(e) {
             throw 'Error getting Token Data'
