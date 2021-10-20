@@ -10,12 +10,12 @@
                 </div>
                 <div class="tabs-row">
                     <label>
-                        <input type="radio" :value="1" name="tabs" id="tab1" v-model="activeTab"/>
+                        <input type="radio" :value="1" name="data-tabs" id="data-tabs1" v-model="activeTab"/>
                         <span>Order Book</span>
                     </label>
 
                     <label>
-                        <input type="radio" :value="2" name="tabs" id="tab2" v-model="activeTab"/>
+                        <input type="radio" :value="2" name="data-tabs" id="data-tabs2" v-model="activeTab"/>
                         <span>History</span>
                     </label>
                 </div>
