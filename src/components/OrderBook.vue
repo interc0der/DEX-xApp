@@ -169,12 +169,6 @@ export default {
 
         let self = this
 
-        // Todo
-        client.on('ledger', () => {
-            // self.$store.dispatch('getOrderBookData')
-            // self.$store.dispatch('setLastTradedPrice')
-        })
-
         this.$emitter.on('changedCurrency', data => {
             // Todo: No emitter 
             self.liquidityCheck()

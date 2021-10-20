@@ -9,6 +9,8 @@ import Events from '@/views/Events.vue'
 import Trade from '@/views/Trade.vue'
 import Data from '@/views/TradeData.vue'
 
+import client from '../plugins/ws-client'
+
 export default {
     components: { Events, Trade, Data },
     data() {
@@ -26,6 +28,12 @@ export default {
 
         this.$emitter.on('changedCurrency', data => {
             this.$store.dispatch('getOrderBookData')
+        })
+
+        // Todo
+        let self = this
+        client.on('ledger', () => {
+            self.$store.dispatch('getCurrentOrderBook')
         })
     }
 }

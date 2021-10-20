@@ -42,9 +42,12 @@ const getters = {
 const actions = {
     getOrderBookData: async (context, resetReadyState) => {
         if(resetReadyState) context.commit('isReady', false)
-        // await Promise.all([context.dispatch('setSellSide'), context.dispatch('setBuySide')])
         await context.dispatch('subscribeToBook')
         return context.commit('isReady', true)
+    },
+    getCurrentOrderBook: async (context) => {
+        // Todo if subscribed parse instead of fetching new data
+        await Promise.all([context.dispatch('setSellSide'), context.dispatch('setBuySide')])
     },
     subscribeToBook: async (context, payload) => {
         // todo unsubscribe & on book???
@@ -227,41 +230,41 @@ const actions = {
     },
     flipPrices: (context) => {
         context.commit('flipMarket')
+    },
+    setSellSide: async (context, payload) => {
+        const tradingPair = context.rootGetters.getCurrencyPair
+
+        const dataSell = await client.send({
+            command: 'book_offers',
+            taker_gets: {
+                currency: tradingPair.base.currency,
+                issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+            },
+            taker_pays: {
+                currency: tradingPair.quote.currency,
+                issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
+            }
+        })
+        const askBook = dataSell.offers
+        return context.commit('setAskOrders', askBook)
+    },
+    setBuySide: async (context, payload) => {
+        const tradingPair = context.rootGetters.getCurrencyPair
+
+        const dataBuy = await client.send({
+            command: 'book_offers',
+            taker_gets: {
+                currency: tradingPair.quote.currency,
+                issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
+            },
+            taker_pays: {
+                currency: tradingPair.base.currency,
+                issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
+            }
+        })
+        const bidBook = dataBuy.offers
+        return context.commit('setBidOrders', bidBook)
     }
-    // setSellSide: async (context, payload) => {
-    //     const tradingPair = context.rootGetters.getCurrencyPair
-
-    //     const dataSell = await client.send({
-    //         command: 'book_offers',
-    //         taker_gets: {
-    //             currency: tradingPair.base.currency,
-    //             issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
-    //         },
-    //         taker_pays: {
-    //             currency: tradingPair.quote.currency,
-    //             issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
-    //         }
-    //     })
-    //     const askBook = dataSell.offers
-    //     return context.commit('setAskOrders', askBook)
-    // },
-    // setBuySide: async (context, payload) => {
-    //     const tradingPair = context.rootGetters.getCurrencyPair
-
-    //     const dataBuy = await client.send({
-    //         command: 'book_offers',
-    //         taker_gets: {
-    //             currency: tradingPair.quote.currency,
-    //             issuer: tradingPair.quote.currency === 'XRP' ? undefined : tradingPair.quote.issuer
-    //         },
-    //         taker_pays: {
-    //             currency: tradingPair.base.currency,
-    //             issuer: tradingPair.base.currency === 'XRP' ? undefined : tradingPair.base.issuer
-    //         }
-    //     })
-    //     const bidBook = dataBuy.offers
-    //     return context.commit('setBidOrders', bidBook)
-    // }
 }
 
 const mutations = {
