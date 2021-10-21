@@ -71,6 +71,8 @@ const actions = {
         return context.commit('toggleSafeMarket', bool)
     },
     getTickerData: async (context, payload) => {
+        // todo
+        return
         const currencyPair = context.getters.getCurrencyPair
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
