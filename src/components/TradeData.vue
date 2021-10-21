@@ -46,13 +46,33 @@
                                 <span class="number">{{ `${QuantityFormat(item.TakerPays.values.filled, item.TakerPays.currency)}/${QuantityFormat(item.TakerPays.values.created, item.TakerPays.currency)}` }}</span>
                             </div>
                             <div v-else class="column">
-                                <h6>{{ `pays/gets` }}</h6>
-                                <span class="number">{{ `?No base/No quote?` }}</span>
+                                <h6>{{ `Filled/Total` }}</h6>
+
+
+                                <div class="row">
+                                    <div class="column" style="width: fit-content">
+                                        <span class="number">{{ `${QuantityFormat(item.TakerGets.values.filled, item.TakerGets.currency)}/${QuantityFormat(item.TakerGets.values.created, item.TakerGets.currency)} ${currencyCodeFormat(item.TakerGets.currency, 4)}` }}</span>
+                                        <div style="height: 5px"><!-- spacer --></div>
+                                        <span class="number">{{ `${QuantityFormat(item.TakerPays.values.filled, item.TakerPays.currency)}/${QuantityFormat(item.TakerPays.values.created, item.TakerPays.currency)} ${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</span>
+                                    </div>
+                                    <fa class="trade-undefined-icon" style="padding: 0 5px" :icon="['fa', 'level-down-alt']" />
+                                </div>
+                            
+                            
                             </div>
                             <div class="column">
-                                <h6>{{ `Price: ${currencyCodeFormat(item.TakerGets.currency, 4)}/${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</h6>
-                                <span v-if="getOrderTrade(item)" class="number">{{ priceFormat(getOrderPrice(item)) }}</span>
-                                <span v-else>--</span>
+                                <template v-if="getOrderTrade(item)">
+                                    <h6>{{ `Price ${currencyCodeFormat(item.TakerGets.currency, 4)}/${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</h6>
+                                    <span class="number">{{ priceFormat(getOrderPrice(item)) }}</span>
+                                </template>
+
+                                <template v-else>
+                                    <h6>Prices</h6>
+                                    <span class="number">{{ priceFormat(getOrderPrice(item, 'sell')) }}  {{ `${currencyCodeFormat(item.TakerGets.currency, 4)}/${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</span>
+                                    <div style="height: 5px"><!-- spacer --></div>
+                                    <span class="number">{{ priceFormat(getOrderPrice(item, 'buy')) }}  {{ `${currencyCodeFormat(item.TakerPays.currency, 4)}/${currencyCodeFormat(item.TakerGets.currency, 4)}` }}</span>
+                                </template>
+                                
                             </div>
                         </div>
                         <div class="action-row">
@@ -171,8 +191,8 @@ export default {
             else if(order.TakerPays.currency === this.tradingPair.quote.currency || order.TakerGets.currency === this.tradingPair.base.currency) return 'sell'
             else null
         },
-        getOrderPrice(order) {
-            const trade = this.getOrderTrade(order)
+        getOrderPrice(order, givenTrade) {
+            const trade = givenTrade || this.getOrderTrade(order)
             let price = 0
             if (trade === 'sell') {
                 price = order.TakerPays.values.open / order.TakerGets.values.open
