@@ -65,8 +65,8 @@ const getters = {
 
         if(currency === 'XRP') {
             if(typeof state.accountInfo.Balance === undefined) return null
-            const accountReserve = 20_000_000
-            const reserved = state.accountObjects.length * 5_000_000
+            const accountReserve = 10_000_000
+            const reserved = state.accountObjects.length * 2_000_000
             const balance = (state.accountInfo.Balance - accountReserve - reserved)
             return balance
         } else {
