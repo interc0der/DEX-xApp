@@ -11,12 +11,12 @@
         </div>
         <div class="tabs-row">
             <label>
-                <input type="radio" :value="1" name="tabs" id="tab1" v-model="activeTab"/>
+                <input type="radio" value="1" name="tabs" id="tab1" v-model="activeTab"/>
                 <span>Open Orders</span>
             </label>
 
             <label>
-                <input type="radio" :value="2" name="tabs" id="tab2" v-model="activeTab"/>
+                <input type="radio" value="2" name="tabs" id="tab2" v-model="activeTab"/>
                 <span>Orders History</span>
             </label>
         </div>
@@ -116,7 +116,7 @@ export default {
   components: { SpinnerButton },
     data() {
         return {
-            activeTab: 2,
+            activeTab: '1',
             selectedCurrency: 'All',
             selectedIssuer: 'All',
             filterFailedResults: true
@@ -163,9 +163,9 @@ export default {
         },
         listItems() {
             switch(this.activeTab) {
-                case 1:
+                case '1':
                     return this.openOrderList
-                case 2:
+                case '2':
                     return this.historyList
             }
         }
@@ -245,6 +245,12 @@ export default {
         },
         async info(order) {
             const txId = (order.status === 'open' ? order.hashes[0] : (order.hashes[order.hashes.length - 1] || order.hashes[0]) )
+
+            if(typeof window.ReactNativeWebView === 'undefined') {
+                window.open(`https://testnet.xrpl.org/transactions/${txId}`)
+                return
+            }
+
             try {
                 const data = await xapp.getTokenData()
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
@@ -266,6 +272,7 @@ export default {
 </script>
 
 <style scoped>
+
 h2 {
     margin: 0;
 }
