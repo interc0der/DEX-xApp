@@ -92,17 +92,22 @@ const getters = {
 }
 
 const actions = {
+    resetData: (context) => {
+        context.dispatch('resetOfferState')
+        context.dispatch('setOpenOffers', [])
+        context.commit('setAccountObjects', [])
+        context.commit('setAccountTransactions', [])
+    },
     setAccount: async (context, account) => {
+        if(account !== context.state.address) context.dispatch('resetData')
         context.commit('setAccount', account)
         try {
             await context.dispatch('setAccountInfo')
+            await Promise.all([context.dispatch('setAccountObjects'), context.dispatch('setAccountTransactions')])
+            context.dispatch('checkOpenOffers')
         } catch(e) {
             console.log('Error with account info: ' + e)
         }
-
-        await Promise.all([context.dispatch('setAccountObjects'), context.dispatch('setAccountTransactions')])
-        
-        context.dispatch('checkOpenOffers')
 
         return
     },

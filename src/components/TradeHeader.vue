@@ -55,13 +55,10 @@ export default {
         currencyCodeFormat(string, maxLength) {
             return currencyCodeFormat(string, maxLength)
         },
-        async setAccountData(account) {
-            
-        },
         async signin() {
             // Delete for testing only
             if(typeof window.ReactNativeWebView === 'undefined') {
-                const account = this.$store.getters.getAccount === 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm' ? 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC' : 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm'
+                const account = this.$store.getters.getAccount === 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk' ? 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC' : 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk'
                 if(this.$store.getters.getAccount === account) throw { msg: 'Same account', error: false }
 
                 client.send({
