@@ -55,7 +55,7 @@
                                         <div style="height: 5px"><!-- spacer --></div>
                                         <span class="number">{{ `${QuantityFormat(item.TakerPays.values.filled, item.TakerPays.currency)}/${QuantityFormat(item.TakerPays.values.created, item.TakerPays.currency)} ${currencyCodeFormat(item.TakerPays.currency, 4)}` }}</span>
                                     </div>
-                                    <fa class="trade-undefined-icon" style="padding: 0 5px" :icon="['fa', 'level-down-alt']" />
+                                    <fa class="trade-undefined-icon" style="padding: 0 5px" size="lg" :icon="['fa', 'level-down-alt']" />
                                 </div>
                             
                             
