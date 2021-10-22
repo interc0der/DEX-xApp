@@ -164,15 +164,12 @@ export default {
         }
     },
     mounted() {
-        // this.$store.dispatch('getOrderBookData')
         this.liquidityCheck()
 
         let self = this
 
         this.$emitter.on('changedCurrency', data => {
-            // Todo: No emitter 
             self.liquidityCheck()
-            self.$store.dispatch('getOrderBookData')
         })
     }
 }

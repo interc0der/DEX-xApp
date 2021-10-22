@@ -219,6 +219,7 @@ export default {
                     currency: line.currency
                 } 
             })
+            this.$emitter.emit('changedCurrency', true)
         },
         setCurrency(currency) {
             if(currency === 'XRP') {
@@ -231,9 +232,14 @@ export default {
                         currency: 'XRP'
                     }
                 })
+                this.$emitter.emit('changedCurrency', true)
                 return 
             }
-            if(currency === 'switch') return this.$store.dispatch('changeCurrencyPair', { target: 'switch' })
+            if(currency === 'switch') {
+                this.$store.dispatch('changeCurrencyPair', { target: 'switch' })
+                this.$emitter.emit('changedCurrency', true)
+                return
+            }
             this.openIssuerSelect(currency)
         }
     },

@@ -25,9 +25,14 @@ export default {
         })
 
         this.$store.dispatch('getOrderBookData')
+        
 
         this.$emitter.on('changedCurrency', data => {
             this.$store.dispatch('getOrderBookData')
+
+            if(this.activeComponent === 'data') {
+                this.$store.dispatch('getChartData')
+            }
         })
 
         // Todo
