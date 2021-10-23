@@ -4,7 +4,7 @@
         <p>{{ $t('test.welcome_body') }}</p>
         <a class="btn btn-primary" @click="start = false">
             {{ $t('test.button_start') }}
-            <fa :icon="['fas', 'arrow-right']"/>
+            <fa class="next-btn-icon" :icon="['fas', 'arrow-right']"/>
         </a>
     </div>
     <div v-else-if="!finished" class="container">
@@ -23,7 +23,7 @@
         <a v-if="questions.length <= (index + 1)" @click="check()" class="btn btn-primary">{{ $t('test.button_finish') }}</a>
         <a v-else class="btn btn-primary" @click="next()">
             {{ $t('test.button_next') }}
-            <fa :icon="['fas', 'arrow-right']"/>
+            <fa class="next-btn-icon" :icon="['fas', 'arrow-right']"/>
         </a>
     </div>
     <template v-else>
@@ -33,7 +33,7 @@
             <span>{{ $t('test.score') }}: {{ questions.length - wrongAnswerIndex.length }} / {{ questions.length }}</span>
             <a class="btn btn-primary" @click="finish()">
                 {{ $t('test.button_launch') }}
-                <fa :icon="['fas', 'arrow-right']"/>
+                <fa class="next-btn-icon" :icon="['fas', 'arrow-right']"/>
             </a>
         </div>
         <div v-else-if="wrongAnswerIndex.length <= requirement" class="container">
@@ -45,7 +45,7 @@
             <span>{{ $t('test.score') }}: {{ questions.length - wrongAnswerIndex.length }} / {{ questions.length }}</span>
             <a class="btn btn-primary" @click="finish()">
                 {{ $t('test.button_launch') }}
-                <fa :icon="['fas', 'arrow-right']"/>
+                <fa class="next-btn-icon" :icon="['fas', 'arrow-right']"/>
             </a>
         </div>
         <div v-else class="container">
@@ -54,7 +54,7 @@
             <span>{{ $t('test.score') }}: {{ questions.length - wrongAnswerIndex.length }} / {{ questions.length }}</span>
             <a class="btn btn-primary" @click="close()">
                 {{ $t('test.button_close') }}
-                <fa :icon="['fas', 'arrow-right']"/>
+                <fa class="next-btn-icon" :icon="['fas', 'arrow-right']"/>
             </a>
         </div>
     </template>
@@ -143,6 +143,9 @@ export default {
 .btn {
     min-height: 35px;
     margin: 20px 0;
+}
+.next-btn-icon {
+    margin-left: 0.5rem;
 }
 progress[value] {
     -webkit-appearance: none;
