@@ -137,11 +137,18 @@ export default {
     padding: 0 10px;
     width: fit-content;
     margin: 0 auto;
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+.btn {
+    min-height: 35px;
+    margin: 20px 0;
 }
 progress[value] {
     -webkit-appearance: none;
     appearance: none;
     height: 4px;
+    min-height: 4px;
 }
 progress[value]::-webkit-progress-bar {
     background-color: #FFF;
