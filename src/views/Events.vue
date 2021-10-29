@@ -62,7 +62,7 @@
                             <div class="column">
                                 <h5>
                                     Status:
-                                    <span class="number">{{ item.status }}</span>
+                                    <span class="number">{{ statusString(item.status) }}</span>
                                 </h5>
                                 <h5>
                                     Filled status:
@@ -171,6 +171,12 @@ export default {
         }
     },
     methods: {
+        statusString(statusObj) {
+            if(statusObj.failed) return 'Failed'
+            if(statusObj.canceled) return 'Canceled'
+            if(statusObj.active) return 'Open'
+            return 'Closed'
+        },
         openTradeView() {
             this.$emitter.emit('changeView', 'trade')
         },
