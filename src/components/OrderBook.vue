@@ -47,7 +47,7 @@
 <script>
 import { LiquidityCheck } from 'xrpl-orderbook-reader'
 import client from '../plugins/ws-client'
-import { quantityFormat, priceFormat } from '../plugins/number-format'
+import { quantityFormat, priceFormat, prefixNumber } from '../plugins/number-format'
 
 export default {
     data() {
@@ -80,9 +80,11 @@ export default {
     },
     methods: {
         priceFormat,
+        prefixNumber,
         QuantityFormat(value) {
             if(this.tradingPair.base.currency === 'XRP') value = value / 1_000_000
-            return quantityFormat(value)
+            return this.prefixNumber(value, 3)
+            return quantityFormat(value, this.tradingPair.base.currency)
         },
         emitPrice(value) {
             this.$emitter.emit('limitPriceUpdate', value)

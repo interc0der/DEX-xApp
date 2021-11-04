@@ -107,10 +107,33 @@ const priceFormat = (value) => {
     return round(value, precision)
 }
 
+const prefixNumber = (value, digits) => {
+    if(isNaN(Number(value)) || value < 0) return 'NaN'
+    if(isNaN(digits)) digits = 4
+
+    if(Number(value) < 1000) return quantityFormat(value)
+
+    const SIprefixList = ['', 'k', 'M', 'B', 'T', 'Q', 'Quint', 'H', 'S', 'O', 'N', 'D', 'U']
+    const exp = Math.ceil(Math.log10(Number(value) + 1))
+    const index = Math.ceil( (exp / 3) - 1 )
+    let prefix = SIprefixList[index]
+
+    if(!prefix) return value
+    
+    const pos = exp - (3 * index)
+    if(pos === 3) return `${value.toString().slice(0,digits)}${prefix}`
+    else {
+        let string = value.toString()
+        string = string.substring(0, pos) + '.' + string.substring(pos, digits) + prefix
+        return string
+    }
+} 
+
 export {
     currencyFormat,
     currencyCodeFormat,
     epochToDate,
     quantityFormat,
-    priceFormat
+    priceFormat,
+    prefixNumber
 }
