@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="row" style="width: calc(100% - 30px); margin: 10px auto">
-            <Slider step="1" min="0" max="100" v-model="quantitySlider"/>
+            <Slider step="5" min="0" max="100" v-model="quantitySlider"/>
         </div>
         <div class="row">
             <div class="column">
@@ -281,7 +281,7 @@ export default {
                 return {
                     currency: currency,
                     issuer: issuer,
-                    value: value.toFixed(8)
+                    value: value.toExponential(15)
                 }
             }
         },
