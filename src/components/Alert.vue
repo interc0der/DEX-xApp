@@ -1,5 +1,5 @@
 <template>
-    <notifications position="top center" :duration="-3000" style="top: 25px;" :max="3">
+    <notifications position="top center" :duration="3000" style="top: 25px;" :max="3">
         <template v-slot:body="slotProps">
             <div class="my-notification" @click="slotProps.close">
                 <fa class="green-icon" v-if="slotProps.item.type === 'success'" :icon="['fas', 'check-circle']"/>
