@@ -17,7 +17,7 @@
         <div class="account-selector">
             <label class="number">
                 <span class="dot" :style="{ 'background-color': online ? 'green' : 'red' }"></span>
-                {{ account }}
+                {{ `${account.slice(0, 4)}...${account.slice(-4)}` }}
             </label>
             <SpinnerButton @click.prevent="signin()" style="font-size: 1rem;">
                 <fa :icon="['fas', 'sign-in-alt']"/>
@@ -129,7 +129,7 @@ export default {
     flex-direction: row;
     align-items: center;
     color: var(--var-txt-color);
-    font-size: 0.7rem;
+    font-size: 0.9rem;
     font-weight: 600;
     margin-right: 5px;
 }
