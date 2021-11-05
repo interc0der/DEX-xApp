@@ -82,9 +82,18 @@ const quantityFormat = (value, currency) => {
 
 const round = (value, decimals) => {
     value = Number(value)
-    if(value < 1) return value.toPrecision(decimals)
-    const integerLength = (value.toFixed(0)).length
-    return value.toPrecision(decimals + integerLength)
+    if(value < 1 && value > 0) {
+        const log = Math.log10(value)
+        const cor = Math.pow(10,log)
+        const exponent = Math.ceil(log + cor)
+
+        return value.toFixed( Math.abs(exponent - 4) )
+        // return value.toPrecision(decimals)
+    } else if (value > 0) {
+        const integerLength = (value.toFixed(0)).length
+        return value.toPrecision(decimals + integerLength)
+    } else if(value === 0) return '0'
+    else 'NaN'
     // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
 }
 
@@ -104,7 +113,8 @@ const maxDecimals = (float) => {
 
 const priceFormat = (value) => {
     const precision = maxDecimals(value)
-    return round(value, precision)
+    const rounded = round(value, precision)
+    return rounded
 }
 
 const prefixNumber = (value, digits) => {

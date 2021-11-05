@@ -68,7 +68,7 @@ import SpinnerButton from '@/components/SpinnerButton.vue'
 
 import xapp from '../plugins/xapp'
 import client from '../plugins/ws-client'
-import { currencyFormat, currencyCodeFormat } from '../plugins/number-format'
+import { currencyFormat, currencyCodeFormat, priceFormat } from '../plugins/number-format'
 
 export default {
     components: { Slider, SpinnerButton },
@@ -419,6 +419,7 @@ export default {
     },
     created() {
         this.$emitter.on('limitPriceUpdate', price => {
+            price = priceFormat(price)
             this.priceInput = price
         })
     },
