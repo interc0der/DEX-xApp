@@ -42,12 +42,16 @@ const getters = {
 
             let issuerRipple
             let accountRipple
-            if( Math.sign(Number(object.Balance?.value)) >= 0 ) {
+            const balanceSign = Math.sign(Number(object.Balance?.value))
+            if(balanceSign > 0) {
                 issuerRipple = object.HighLimit.issuer
                 accountRipple = object.LowLimit.issuer
-            } else {
+            } else if(balanceSign < 0) {
                 issuerRipple = object.LowLimit.issuer
                 accountRipple = object.HighLimit.issuer
+            } else {
+                issuerRipple = object.LowLimit.issuer === state.address ? object.HighLimit.issuer : object.LowLimit.issuer
+                accountRipple = object.HighLimit.issuer === state.address ? object.HighLimit.issuer : object.LowLimit.issuer
             }
 
             array.push({
