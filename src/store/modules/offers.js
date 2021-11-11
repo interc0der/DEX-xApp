@@ -141,7 +141,7 @@ const actions = {
         }
 
         // only for testing todo delete
-        // if(tx.Sequence !== 56678315) {
+        // if(tx.Sequence !== 80) {
         //     return
         // } else {
         //     console.log(transaction)
@@ -285,18 +285,32 @@ const actions = {
 
                 if(node.ModifiedNode?.LedgerEntryType === 'RippleState') {
                     // parse IOU's
-                    if(!isNaN(node.ModifiedNode.FinalFields?.Balance?.value) && !isNaN(node.ModifiedNode.PreviousFields?.Balance?.value) ) {
+                    if(!isNaN(Number(node.ModifiedNode.FinalFields?.Balance?.value)) && !isNaN(Number(node.ModifiedNode.PreviousFields?.Balance?.value)) ) {
                         // HighLimit === issuer if balance positive else is account
                         // LowLimit === account
 
                         let issuerRipple
                         let accountRipple
-                        if( Math.sign(Number(node.ModifiedNode.FinalFields?.Balance?.value)) >= 0 ) {
+                        const balanceSign = Math.sign(Number(node.ModifiedNode.FinalFields?.Balance?.value))
+
+                        if(balanceSign > 0) {
                             issuerRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
                             accountRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
-                        } else {
+                        } else if(balanceSign < 0) {
                             issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
                             accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                        } else {
+                            // balance is zero. check who has a limit set
+                            if(Number.parseFloat(node.ModifiedNode.FinalFields.HighLimit.value) > 0 && Number.parseFloat(node.ModifiedNode.FinalFields.LowLimit.value) === 0) {
+                                issuerRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                                accountRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                            } else if(Number.parseFloat(node.ModifiedNode.FinalFields.LowLimit.value) > 0 && Number.parseFloat(node.ModifiedNode.FinalFields.HighLimit.value) === 0) {
+                                issuerRipple = node.ModifiedNode.FinalFields.HighLimit.issuer
+                                accountRipple = node.ModifiedNode.FinalFields.LowLimit.issuer
+                            } else {
+                                issuerRipple = null
+                                accountRipple = null
+                            }
                         }
 
                         let value = Number(node.ModifiedNode.FinalFields.Balance.value) - Number(node.ModifiedNode.PreviousFields?.Balance?.value)
@@ -305,8 +319,6 @@ const actions = {
                             issuer: issuerRipple,
                             value: value
                         }
-
-                        // addBalance(issuerRipple, balanceObj)
                         addBalance(accountRipple, balanceObj)
                     }
                 }
@@ -315,12 +327,24 @@ const actions = {
                     if(!isNaN(node.CreatedNode.NewFields?.Balance?.value)) {
                         let issuerRipple
                         let accountRipple
-                        if( Math.sign(Number(node.CreatedNode.NewFields?.Balance?.value)) >= 0 ) {
+                        const balanceSign = Math.sign(Number(node.CreatedNode.NewFields?.Balance?.value))
+                        if(balanceSign > 0) {
                             issuerRipple = node.CreatedNode.NewFields.HighLimit.issuer
                             accountRipple = node.CreatedNode.NewFields.LowLimit.issuer
-                        } else {
+                        } else if(balanceSign < 0) {
                             issuerRipple = node.CreatedNode.NewFields.LowLimit.issuer
                             accountRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                        } else {
+                            if(Number.parseFloat(node.CreatedNode.NewFields.HighLimit.value) > 0 && Number.parseFloat(node.CreatedNode.NewFields.LowLimit.value) === 0) {
+                                issuerRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                                accountRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                            } else if(Number.parseFloat(node.CreatedNode.NewFields.LowLimit.value) > 0 && Number.parseFloat(node.CreatedNode.NewFields.HighLimit.value) === 0) {
+                                issuerRipple = node.CreatedNode.NewFields.HighLimit.issuer
+                                accountRipple = node.CreatedNode.NewFields.LowLimit.issuer
+                            } else {
+                                issuerRipple = null
+                                accountRipple = null
+                            }
                         }
 
                         const balanceObj = {
