@@ -104,7 +104,7 @@ export default {
                     {
                         // type: 'logarithmic',
                         title: {
-                            text: 'Price',
+                            // text: 'Price',
                             style: {
                             color: '#000000'
                             },
