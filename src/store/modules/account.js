@@ -130,15 +130,16 @@ const actions = {
             }
         })
     },
-    setAccountObjects: async (context) => {
+    setAccountObjects: async (context, marker) => {
         if(context.getters.hasAccountErrors) {
             context.dispatch('setOpenOffers', [])
             return context.commit('setAccountObjects', [])
         }
-        
+
         const res = await xrpl.send({
             command: 'account_objects',
-            account: context.state.address
+            account: context.state.address,
+            marker: marker
         })
 
         const objects = res.account_objects
@@ -146,7 +147,15 @@ const actions = {
 
         // Dispatch action to set offers
         context.dispatch('setOpenOffers', offerObjects)
-        return context.commit('setAccountObjects', objects)
+        if(marker) {
+            context.commit('mergeAccountObjects', objects)
+        } else {
+            context.commit('setAccountObjects', objects)
+        }
+
+        if(res.hasOwnProperty('marker')) {
+            context.dispatch('setAccountObjects', res.marker)
+        } else return
     },
     setAccountTransactions: async (context) => {
         if(context.getters.hasAccountErrors) {
@@ -205,6 +214,9 @@ const mutations = {
     },
     setAccountObjects: (state, arr) => {
         state.accountObjects = arr
+    },
+    mergeAccountObjects: (state, arr) => {
+        state.accountObjects = state.accountObjects.concat(arr)
     },
     setAccountTransactions: (state, arr) => {
         state.accountTransactions = arr
