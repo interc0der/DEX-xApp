@@ -1,6 +1,5 @@
 <template>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <div id="view">
+    <div id="view">
         <Test v-if="!init" @passed="completedTest" />
         <Controller v-else-if="ready" />
         <Modal />
@@ -155,49 +154,6 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@600&display=swap');
 @import URL('https://use.typekit.net/rav4uns.css');
 
-:root {
-    /* MOONLIGHT #181A21 */
-    --var-primary: rgb(255, 159, 10);
-    --var-bg-color: #000;
-    --var-bg-color-secondary: var(--grey4);
-    --var-txt-color: white;
-    --var-secondary: var(--grey5);
-    --var-border:rgb(39, 39, 39);
-    --var-backdrop: 0, 0, 0;
-
-    /* Dark */
-    --blue:rgb(10, 132, 255);
-    --green:rgb(48, 209, 88);
-    --red:rgb(255, 69, 58);
-    --orange:rgb(255, 159, 10);
-    --grey:rgb(142, 142, 147);
-    --grey2:rgb(99, 99, 102);
-    --grey3:rgb(72, 72, 74);
-    --grey4:rgb(58, 58, 60);
-    --grey5:rgb(44, 44, 46);
-    --grey6:rgb(28, 28, 30);
-
-    /* Light */
-    /* --blue: rgba(0, 122, 255);
-    --green: rgba(52, 199, 89);
-    --orange: rgba(255, 149, 0);
-    --red: rgb(255, 59, 48);
-    --grey: rgba(142, 142, 147);
-    --grey2: rgba(174, 174, 178);
-    --grey3: rgba(199, 199, 204);
-    --grey4: rgba(209, 209, 214);
-    --grey5: rgba(229, 229, 234);
-    --grey6: rgba(242, 242, 247); */
-}
-
-html, body {
-    height: 100%;
-    width: 100%;
-    margin: 0;
-    overscroll-behavior-y: none;
-    position: fixed;
-    overflow: hidden;
-}
 #app {
 	font-family: proxima-nova, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -208,7 +164,6 @@ html, body {
 #view {
     height: 100%;
     overflow: hidden;
-    background-color: var(--var-bg-color);
     color: var(--var-txt-color);
     user-select: none;
 }

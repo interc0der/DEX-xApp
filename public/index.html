@@ -3,9 +3,41 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
     <title><%= htmlWebpackPlugin.options.title %></title>
+    <link rel="stylesheet" href="<%= BASE_URL %>styles.css">
+    <script>
+      var root = document.documentElement
+      var urlParams = new URLSearchParams(window.location.search)
+      var theme = urlParams.get('xAppStyle') || 'MOONLIGHT'
+      var backgroundColor = '#181A21'
+      
+      switch(theme) {
+        // case 'LIGHT':
+        //   backgroundColor = '#FFF'
+        //   root.classList.add('light')
+        //   break
+        case 'DARK':
+          backgroundColor = '#000'
+          root.classList.add('dark')
+          break
+        case 'MOONLIGHT':
+          backgroundColor = '#181A21'
+          root.classList.add('dark')
+          break
+        case 'ROYAL':
+          backgroundColor = '#030B36'
+          root.classList.add('dark')
+          break
+        default:
+          backgroundColor = '#181A21'
+          root.classList.add('dark')
+      }
+      root.style.backgroundColor = backgroundColor
+      root.style.setProperty('--var-bg-color', backgroundColor)
+      
+    </script>
   </head>
   <body>
     <noscript>
