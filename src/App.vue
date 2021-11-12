@@ -59,7 +59,6 @@ export default {
                 this.ready = true
             } catch(e) {
                 this.error = this.$t('xapp.error.subscribe_to_ledger')
-                alert(this.error)
                 throw e
             }
         },
@@ -68,6 +67,10 @@ export default {
                 const urlParams = new URLSearchParams(window.location.search)
                 const ott = urlParams.get('xAppToken')
                 const data = await xapp.getTokenData(ott)
+
+                if(data.hasOwnProperty('currency') && data.hasOwnProperty('issuer')) {
+                    this.$store.dispatch('changeCurrencyPair', { target: 'quote', amount: { currency: data.currency, issuer: data.issuer } })
+                }
 
                 if(this.error === this.$t('xapp.error.get_ott_data')) {
                     this.error = false
