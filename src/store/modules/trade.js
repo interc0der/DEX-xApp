@@ -94,15 +94,6 @@ const actions = {
         } catch(e) {
             console.error(e)
         }
-        // const currencyPair = context.getters.getCurrencyPair
-        // const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
-        // const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
-
-        // const symbols = [`${currency1}/${currency2}`]
-        // const res = await axios.post('https://api.sologenic.org/api/v1/tickers/24h', {
-        //     symbols: symbols
-        // })
-        // console.log(res.data)
     },
     getChartData: async (context, payload) => {
         const currencyPair = context.getters.getCurrencyPair
