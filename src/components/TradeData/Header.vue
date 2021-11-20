@@ -3,10 +3,11 @@
         <a class="header-btn" @click="openTradeView()">
             <fa class="header-icon" :icon="['fas', 'chevron-left']" />
         </a>
-        <div class="column">
+        <div class="row">
             <a @click="selectActive = true" class="currency-pair-select-btn">{{ currencyCodeFormat(currencyPair.base.currency) }}/{{ currencyCodeFormat(currencyPair.quote.currency) }}
                 <fa size="xs" :icon="['fas', 'chevron-down']"/>
             </a>
+            <Ticker />
         </div>
     </div>
     <Select v-show="selectActive" @close="selectActive = false"/>
@@ -16,9 +17,10 @@
 import { currencyCodeFormat } from '../../plugins/number-format'
 
 import Select from '@/components/Select.vue'
+import Ticker from '@/components/Ticker.vue'
 
 export default {
-    components: { Select },
+    components: { Select, Ticker },
     data() {
         return {
             selectActive: false
@@ -60,6 +62,7 @@ export default {
     color: var(--var-txt-color);
     font-weight: 600;
     text-align: start;
+    margin-right: 10px;
 }
 .account-selector {
     display: flex;

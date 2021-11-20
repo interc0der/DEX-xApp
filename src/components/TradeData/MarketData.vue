@@ -2,7 +2,6 @@
     <div id="trade-view-ticker-data-container">
         <div class="column">
             <h2 class="number" :class="{'buy': trend, 'sell': !trend}">{{ priceFormat(marketPrice) }}</h2>
-            <Ticker />
         </div>
         <div id="trade-view-ticker-data-24h" class="column">
             <span>
@@ -22,12 +21,9 @@
 </template>
 
 <script>
-import Ticker from '@/components/Ticker.vue'
-
 import { priceFormat, quantityFormat, prefixNumber } from '../../plugins/number-format'
 
 export default {
-    components: { Ticker },
     computed: {
         currencyPair() {
             return this.$store.getters.getCurrencyPair
