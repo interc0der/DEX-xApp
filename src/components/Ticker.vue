@@ -2,7 +2,7 @@
     <div class="ticker" :class="{'buy': Math.sign(Number(ticker)) > 0, 'sell': Math.sign(Number(ticker)) < 0}">
         <fa v-if="Math.sign(Number(ticker)) > 0" class="buy" :icon="['fa', 'caret-up']"/>
         <fa v-else-if="Math.sign(Number(ticker)) < 0" class="sell" :icon="['fa', 'caret-down']"/>
-        <label>{{ ticker }}%</label>
+        <label class="number">{{ ticker }}%</label>
     </div>
 </template>
 
@@ -30,6 +30,9 @@ export default {
 </script>
 
 <style scoped>
+.ticker > label {
+    margin-left: 2px;
+}
 .ticker {
     display: flex;
     flex-direction: row;
