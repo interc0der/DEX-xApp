@@ -5,6 +5,7 @@ const state = {
     marketPrice: 0,
     marketPriceHasError: false,
     marketTrend: 0,
+    marketTickerData: {},
     currencyPair: {
         base: {
             currency: 'XRP',
@@ -17,7 +18,8 @@ const state = {
     },
     tradeHistory: [],
     chartData: [],
-    selectedChartInterval: '4hour'
+    selectedChartInterval: '4hour',
+    tickerData: []
 }
 
 const getters = {
@@ -37,6 +39,9 @@ const getters = {
             return false
         }
         return state.marketTrend
+    },
+    getMarketTickerData: state => {
+        return state.marketTickerData
     },
     getAllTradeHistory: state => {
         return state.tradeHistory
@@ -71,17 +76,33 @@ const actions = {
         return context.commit('toggleSafeMarket', bool)
     },
     getTickerData: async (context, payload) => {
-        // todo
-        return
+
+        let now = new Date()
+        now.setUTCHours(now.getUTCHours() - 24)
+        const yesterday = now.toJSON()
+
         const currencyPair = context.getters.getCurrencyPair
+        const endpoint = 'https://data.ripple.com/v2/exchanges/'
+        const options = `?start=${yesterday}&reduce=true`
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+        const call = `${endpoint}${currency1}/${currency2}${options}`
 
-        const symbols = [`${currency1}/${currency2}`]
-        const res = await axios.post('https://api.sologenic.org/api/v1/tickers/24h', {
-            symbols: symbols
-        })
-        console.log(res.data)
+        try {
+            const res = await axios.get(call)
+            return context.commit('setTickerDataMarket', res.data.exchanges)
+        } catch(e) {
+            console.error(e)
+        }
+        // const currencyPair = context.getters.getCurrencyPair
+        // const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
+        // const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+
+        // const symbols = [`${currency1}/${currency2}`]
+        // const res = await axios.post('https://api.sologenic.org/api/v1/tickers/24h', {
+        //     symbols: symbols
+        // })
+        // console.log(res.data)
     },
     getChartData: async (context, payload) => {
         const currencyPair = context.getters.getCurrencyPair
@@ -122,6 +143,7 @@ const actions = {
         context.commit('pushTxToTradeHistory', payload)
     },
     setLastTradedPrice: async (context, bool) => {
+        context.dispatch('getTickerData')
         const currencyPair = context.getters.getCurrencyPair
 
         const endpoint = 'https://data.ripple.com/v2/exchanges/'
@@ -170,6 +192,9 @@ const mutations = {
         } else {
             state.marketTrend = -1
         }
+    },
+    setTickerDataMarket: (state, data) => {
+        state.marketTickerData = data[0]
     },
     pushTxToTradeHistory: (state, item) => {
         state.tradeHistory.unshift(item)
