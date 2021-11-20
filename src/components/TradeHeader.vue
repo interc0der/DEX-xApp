@@ -1,18 +1,10 @@
 <template>
-    <!-- <div class="row header padding">
-        <h6>
-            <span class="dot" :style="{ 'background-color': online ? 'green' : 'red' }"></span>
-            {{ account }}
-        </h6>
-        <SpinnerButton @click.prevent="signin()" style="margin-left: auto;">
-            <fa :icon="['fas', 'sign-in-alt']"/>
-        </SpinnerButton>
-    </div> -->
     <div class="row header" style="margin-top: 0;">
-        <div class="column">
+        <div class="row">
             <a @click="selectActive = true" class="currency-pair-select-btn">{{ currencyCodeFormat(currencyPair.base.currency) }}/{{ currencyCodeFormat(currencyPair.quote.currency) }}
                 <fa size="xs" :icon="['fas', 'chevron-down']"/>
             </a>
+            <Ticker />
         </div>
         <div class="account-selector">
             <label class="number">
@@ -34,9 +26,10 @@ import { currencyCodeFormat } from '../plugins/number-format'
 
 import Select from '@/components/Select.vue'
 import SpinnerButton from '@/components/SpinnerButton.vue'
+import Ticker from './Ticker.vue'
 
 export default {
-    components: { Select, SpinnerButton },
+    components: { Select, SpinnerButton, Ticker },
     data() {
         return {
             selectActive: false,
