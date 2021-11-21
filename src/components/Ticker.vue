@@ -10,8 +10,7 @@
 export default {
     computed: {
         marketPrice() {
-            if(this.$store.getters.getLastTradedPrice > 0) return this.$store.getters.getLastTradedPrice
-            else return this.$store.getters.getMarketPrice
+            return this.$store.getters.getMarketPrice
         },
         tickerData() {
             return this.$store.getters.getMarketTickerData

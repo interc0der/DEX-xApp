@@ -8,9 +8,7 @@ import { parseOrderbookChanges, parseBalanceChanges } from 'ripple-lib-transacti
 const state = {
     ready: false,
     asks: [],
-    bids: [],
-    secondToLastTradedPrice: null,
-    lastTradedPrice: null
+    bids: []
 }
 
 const getters = {
@@ -22,20 +20,6 @@ const getters = {
     },
     getOrderBookReadyState: state => {
         return state.ready
-    },
-    getLastTradedPrice: state => {
-        return state.lastTradedPrice
-    },
-    getSecondToLastTradedPrice: state => {
-        return state.secondToLastTradedPrice
-    },
-    getMarketTrend: state => {
-        if(!state.secondToLastTradedPrice) return null
-        if(state.lastTradedPrice > state.secondToLastTradedPrice) {
-            return true
-        } else {
-            return false
-        }
     }
 }
 
@@ -208,7 +192,7 @@ const actions = {
         })
 
         for(let updateItem of tradeUpdates) {
-            context.commit('updateLastTradedPrice', updateItem.rate)
+            context.dispatch('updateLastTradedPrice', updateItem.rate)
             context.dispatch('pushTxToTradeHistory', updateItem)
             payload.emitter.emit('tradeDataUpdate', updateItem)
             // if (updateItem.base_currency === 'XRP' || updateItem.counter_currency === 'XRP') {
@@ -219,17 +203,14 @@ const actions = {
                 //     console.log('Do not update market price: both values positive')
                 // }
                 // else {
-                    // context.commit('updateLastTradedPrice', updateItem.rate)
+                    // context.dispatch('updateLastTradedPrice', updateItem.rate)
                 // }
                 // context.dispatch('pushTxToTradeHistory', updateItem)
             // } else {
-            //     context.commit('updateLastTradedPrice', updateItem.rate)
+            //     context.dispatch('updateLastTradedPrice', updateItem.rate)
             //     context.dispatch('pushTxToTradeHistory', updateItem)
             // }
         }
-    },
-    flipPrices: (context) => {
-        context.commit('flipMarket')
     },
     setSellSide: async (context, payload) => {
         const tradingPair = context.rootGetters.getCurrencyPair
@@ -276,18 +257,7 @@ const mutations = {
     },
     isReady: (state, bool) => {
         state.ready = bool
-    },
-    updateLastTradedPrice: (state, price) => {
-        console.log(`Price Update: ${price}`)
-
-        if(state.lastTradedPrice > 0) state.secondToLastTradedPrice = state.lastTradedPrice
-        state.lastTradedPrice = price
-    },
-    flipMarket: (state) => {
-        console.log('flip market prices')
-        if(state.lastTradedPrice > 0) state.lastTradedPrice = Math.pow(state.lastTradedPrice, -1)
-        if(state.secondToLastTradedPrice > 0) state.secondToLastTradedPrice = Math.pow(state.secondToLastTradedPrice, -1)
-    }
+    }    
 }
 
 export default {

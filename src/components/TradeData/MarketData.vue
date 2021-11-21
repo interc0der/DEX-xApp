@@ -1,7 +1,7 @@
 <template>
     <div id="trade-view-ticker-data-container">
         <div class="column">
-            <h2 class="number" :class="{'buy': trend, 'sell': !trend}">{{ priceFormat(marketPrice) }}</h2>
+            <h2 class="number" :class="{'buy': trend > 0, 'sell': trend < 0}">{{ marketPriceError ? '--' : priceFormat(marketPrice) }}</h2>
         </div>
         <div id="trade-view-ticker-data-24h" class="column">
             <span>
@@ -29,12 +29,13 @@ export default {
             return this.$store.getters.getCurrencyPair
         },
         marketPrice() {
-            if(this.$store.getters.getLastTradedPrice > 0) return this.$store.getters.getLastTradedPrice
-            else return this.$store.getters.getMarketPrice
+            return this.$store.getters.getMarketPrice
+        },
+        marketPriceError() {
+            return this.$store.getters.getMarketPriceError
         },
         trend() {
-            if(this.$store.getters.getMarketTrend !== null) return this.$store.getters.getMarketTrend
-            else return this.$store.getters.marketTrend
+            return this.$store.getters.marketTrend
         },
         tickerData() {
             return this.$store.getters.getMarketTickerData

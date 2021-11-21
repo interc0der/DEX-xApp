@@ -29,15 +29,13 @@ const getters = {
     getMarketPrice: state => {
         return Number(state.marketPrice)
     },
+    getMarketPriceError: state => {
+        return state.marketPriceHasError
+    },
     isMarketSafe: state => {
         return state.isSafe
     },
     marketTrend: state => {
-        if(state.marketTrend > 0) {
-            return true
-        } else {
-            return false
-        }
         return state.marketTrend
     },
     getMarketTickerData: state => {
@@ -64,8 +62,6 @@ const actions = {
         context.commit('setCurrencyPair', obj)
         // todo
         context.dispatch('setLastTradedPrice')
-        
-        if(obj.target === 'switch') context.dispatch('flipPrices')
         
         // Flip??
         context.dispatch('getTradeHistory')
@@ -138,18 +134,52 @@ const actions = {
         const currencyPair = context.getters.getCurrencyPair
 
         const endpoint = 'https://data.ripple.com/v2/exchanges/'
-        const options = '?descending=true&result=tesSUCCESS&limit=2'
+        const options = '?descending=true&result=tesSUCCESS&limit=10'
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
 
         try {
             const res = await axios.get(call)
-            return context.commit('setMarketPrice', res.data)
+            const obj = res.data
+
+            if(!obj.hasOwnProperty('exchanges')) throw 'No propertie exchanges'
+            else if(obj.exchanges.length < 1) throw 'Array has no items'
+            else if(!obj.exchanges[0].hasOwnProperty('rate')) throw 'No Market Price'
+
+            const price = obj.exchanges[0].rate
+
+            if(isNaN(Number(price))) throw 'Market Price is NaN'
+
+            let trend = 0
+            for(const trade of obj.exchanges) {
+                if(price > trade.rate) {
+                    trend = 1
+                    break
+                }
+                else if(price < trade.rate) {
+                    trend = -1
+                    break
+                }
+                
+            }
+
+            return context.commit('setMarketPrice', [price, trend])
         } catch(e) {
             console.error(e)
-            return context.commit('setMarketPrice', 'error')
+            context.commit('toggleSafeMarket', false)
+            return context.commit('setMarketPriceError', e)
         }
+    },
+    updateLastTradedPrice: (context, price) => {
+        if(isNaN(Number(price))) {
+            context.commit('toggleSafeMarket', false)
+            context.commit('setMarketPriceError', e)
+            return console.log('Price is not a Number')
+        }
+        
+        console.log(`Price Update: ${price}`)
+        context.commit('updateMarketPrice', price)
     }
 }
 
@@ -165,24 +195,25 @@ const mutations = {
             else state.currencyPair.quote = obj.amount
         }
     },
-    setMarketPrice: (state, obj) => {
-        if(obj === 'error') return state.marketPrice = 0
-        if(!obj.hasOwnProperty('exchanges')) return state.marketPrice = 0
-        else if(obj.exchanges.length < 1) return state.marketPrice = 0
-        else if(!obj.exchanges[0].hasOwnProperty('rate')) return state.marketPrice = 0
+    setMarketPrice: (state, arr) => {
+        state.marketPrice = arr[0]
+        state.marketTrend = arr[1]
+        state.marketPriceHasError = false
+    },
+    updateMarketPrice: (state, price) => {
+        if(state.marketPrice !== 0) {
+            if(price > state.marketPrice) state.marketTrend = 1
+            else if(price < state.marketPrice) state.marketTrend = -1
+            else state.marketTrend = 0
+        } else state.marketTrend = 0
 
-        const price = obj.exchanges[0].rate
-
-        if(price) {
-            state.marketPrice = price
-        }
-
-        if(obj.exchanges.length < 2) return
-        if(price > obj.exchanges[1].rate) {
-            state.marketTrend = 1
-        } else {
-            state.marketTrend = -1
-        }
+        state.marketPrice = price
+        state.marketPriceHasError = false
+    },
+    setMarketPriceError: (state, data) => {
+        state.marketPriceHasError = true
+        state.marketPrice = 0
+        state.marketTrend = 0
     },
     setTickerDataMarket: (state, data) => {
         state.marketTickerData = data[0]

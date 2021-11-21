@@ -21,8 +21,8 @@
             <tr>
                 <td class="number" style="width: 100%" colspan="2">
                     <div id="market-row">
-                        <span id="market-price" :class="{'buy': marketTrend, 'sell': !marketTrend}" @click="emitPrice(marketPrice)">
-                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else :icon="['fa', 'arrow-down']" />{{ priceFormat(marketPrice) }}
+                        <span id="market-price" :class="{'buy': marketTrend > 0, 'sell': marketTrend < 0}" @click="emitPrice(marketPrice)">
+                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend > 0" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else-if="marketTrend < 0" :icon="['fa', 'arrow-down']" />{{ marketPriceError ? '--' : priceFormat(marketPrice) }}
                         </span>
                     </div>
                 </td>
@@ -70,12 +70,13 @@ export default {
             return this.$store.getters.getCurrencyPair
         },
         marketPrice() {
-            if(this.$store.getters.getLastTradedPrice > 0) return this.$store.getters.getLastTradedPrice
-            else return this.$store.getters.getMarketPrice
+            return this.$store.getters.getMarketPrice
         },
         marketTrend() {
-            if(this.$store.getters.getMarketTrend !== null) return this.$store.getters.getMarketTrend
-            else return this.$store.getters.marketTrend
+            return this.$store.getters.marketTrend
+        },
+        marketPriceError() {
+            return this.$store.getters.getMarketPriceError
         }
     },
     methods: {
