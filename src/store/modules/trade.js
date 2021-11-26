@@ -72,6 +72,8 @@ const actions = {
         return context.commit('toggleSafeMarket', bool)
     },
     getTickerData: async (context, payload) => {
+        const marker = payload?.marker
+        const firstData = payload?.data
 
         let now = new Date()
         now.setUTCHours(now.getUTCHours() - 24)
@@ -79,14 +81,40 @@ const actions = {
 
         const currencyPair = context.getters.getCurrencyPair
         const endpoint = 'https://data.ripple.com/v2/exchanges/'
-        const options = `?start=${yesterday}&reduce=true`
+        let options = `?start=${yesterday}&reduce=true`
+        // let options = `?start=${yesterday}&interval=1hour&limit=24`
+        if(marker) options = options + `&marker=${marker}`
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
 
         try {
             const res = await axios.get(call)
-            return context.commit('setTickerDataMarket', res.data.exchanges)
+
+            if(res.data.marker && !marker) {
+                return context.dispatch('getTickerData', {
+                    marker: res.data.marker,
+                    data: res.data.exchanges[0]
+                })
+            } else if(res.data.marker && marker) {
+                const newData = res.data.exchanges[0]
+                const lastData = {
+                    high: firstData.high < newData.high ? newData.high : firstData.high,
+                    low: firstData.low > newData.low ? newData.low : firstData.low,
+                    close: newData.close,
+                    base_volume: Number(firstData.base_volume) + Number(newData.base_volume),
+                    counter_volume: Number(firstData.counter_volume) + Number(newData.counter_volume),
+                    buy_volume: Number(firstData.buy_volume) + Number(newData.buy_volume),
+                    count: Number(firstData.count) + Number(newData.count)
+                }
+                
+                return context.dispatch('getTickerData', {
+                    marker: res.data.marker,
+                    data: Object.assign(firstData, lastData)
+                })
+            } else {
+                return context.commit('setTickerDataMarket', firstData || res.data.exchanges)
+            }
         } catch(e) {
             console.error(e)
         }
@@ -216,7 +244,7 @@ const mutations = {
         state.marketTrend = 0
     },
     setTickerDataMarket: (state, data) => {
-        state.marketTickerData = data[0]
+        state.marketTickerData = data
     },
     pushTxToTradeHistory: (state, item) => {
         state.tradeHistory.unshift(item)
