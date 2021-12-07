@@ -93,7 +93,8 @@
             },
             "base": "Base",
             "quote": "Quote",
-            "issuer": "Issuer"
+            "issuer": "Issuer",
+			"search": "Search..."
         },
         "order_book": {
             "price": "Price",
