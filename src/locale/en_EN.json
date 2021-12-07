@@ -94,7 +94,7 @@
             "base": "Base",
             "quote": "Quote",
             "issuer": "Issuer",
-			"search": "Search..."
+            "search": "Search..."
         },
         "order_book": {
             "price": "Price",

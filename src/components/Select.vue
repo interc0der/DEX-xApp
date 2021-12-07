@@ -62,10 +62,10 @@
 
                     <div class="column" v-else-if="currencySelect">
                         <div class="row margin-input">
-							<div class="input-label">
-								<input type="text" v-model.trim="currencyObjectFilter" :placeholder="$t('xapp.trade.search')" />
-							</div>
-						</div>
+                            <div class="input-label">
+                                <input type="text" v-model.trim="currencyObjectFilter" :placeholder="$t('xapp.trade.search')" />
+                            </div>
+                        </div>
                         <ul>
                             <li v-if="(tradingPair.base.currency !== 'XRP' && target === 'quote') || (tradingPair.quote.currency !== 'XRP' && target === 'base')" @click="setCurrency('XRP')">XRP</li>
                             <template v-for="(item, currency, index) in filteredCurrencyObject" :key="index">
@@ -110,7 +110,7 @@ export default {
             selectedCurrency: '',
             curatedAssets: {},
             tokens: [],
-			currencyObjectFilter: "",
+            currencyObjectFilter: "",
         }
     },
     computed: {
@@ -171,7 +171,7 @@ export default {
             }
             return obj
         },
-		filteredCurrencyObject() {
+        filteredCurrencyObject() {
             if (!this.currencyObjectFilter.length) return this.currencyObject;
 
             const result = {};
