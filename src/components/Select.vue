@@ -61,9 +61,14 @@
                     </div>
 
                     <div class="column" v-else-if="currencySelect">
+                        <div class="row margin-input">
+                            <div class="input-label">
+                                <input type="text" v-model.trim="currencyObjectFilter" :placeholder="$t('xapp.trade.search')" />
+                            </div>
+                        </div>
                         <ul>
                             <li v-if="(tradingPair.base.currency !== 'XRP' && target === 'quote') || (tradingPair.quote.currency !== 'XRP' && target === 'base')" @click="setCurrency('XRP')">XRP</li>
-                            <template v-for="(item, currency, index) in currencyObject" :key="index">
+                            <template v-for="(item, currency, index) in filteredCurrencyObject" :key="index">
                                 <li @click="setCurrency(currency)" v-if="!filterCurrency(currency)">
                                     <span>{{ currencyCodeFormat(currency, 16) }}</span>
                                 </li>
@@ -104,7 +109,8 @@ export default {
             target: '',
             selectedCurrency: '',
             curatedAssets: {},
-            tokens: []
+            tokens: [],
+            currencyObjectFilter: "",
         }
     },
     computed: {
@@ -164,7 +170,26 @@ export default {
                 })
             }
             return obj
-        }
+        },
+        filteredCurrencyObject() {
+            if (!this.currencyObjectFilter.length) return this.currencyObject;
+
+            const result = {};
+
+            for (const field in this.currencyObject) {
+                const currencyCode = currencyCodeFormat(field, 16);
+
+                if (
+                    currencyCode
+                        .toLowerCase()
+                        .includes(this.currencyObjectFilter.toLowerCase())
+                ) {
+                    result[field] = this.currencyObject[field];
+                }
+            }
+
+            return result;
+        },
     },
     methods: {
         currencyCodeFormat(string, maxLength) {
@@ -388,5 +413,10 @@ li {
     border-bottom: 1px solid var(--var-border);
     padding: 0.5rem 0;
     text-align: center;
+}
+.input-label input {
+    background-color: var(--var-bg-color-secondary);
+    /* Reset font family to #app default */
+    font-family: proxima-nova, sans-serif;
 }
 </style>
