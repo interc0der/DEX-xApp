@@ -121,9 +121,9 @@ const prefixNumber = (value, digits) => {
     if(isNaN(Number(value)) || value < 0) return 'NaN'
     if(isNaN(digits)) digits = 4
 
-    value = Math.trunc(value)
     if(Number(value) < 1000) return quantityFormat(value)
-
+    value = Math.trunc(value)
+    
     const SIprefixList = ['', 'k', 'M', 'B', 'T', 'Q', 'Quint', 'H', 'S', 'O', 'N', 'D', 'U']
     const exp = Math.ceil(Math.log10(Number(value) + 1))
     const index = Math.ceil( (exp / 3) - 1 )
