@@ -59,7 +59,7 @@
             },
             "fee": {
                 "0": "A fee of 0.2% will be *added* to your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which makes a net total of 10.02USD for 10 XRP.",
-                "1": "A fee of 0.2% is part of your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which makes a net total of 10USD for 0.98 XRP.",
+                "1": "A fee of 0.2% is part of your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which makes a net total of 10USD for 9.98 XRP.",
                 "2": "A fee of 0.2% will be *removed* from your paid amount so if you pay 10 USD for 10 XRP the fee will be 0.2% * 10 = 0.02USD which results in receieving net total of 10.02 XRP in exchange for 10.02USD.",
                 "3": "Trading on the DEX has the same fees as an XRP transaction, approximately 12 Drops"
             },
