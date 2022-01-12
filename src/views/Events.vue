@@ -64,10 +64,11 @@
                                     Status:
                                     <span class="number">{{ statusString(item.status) }}</span>
                                 </h5>
-                                <h5>
+                                <!-- TODO: correct filled status parsing -->
+                                <!-- <h5>
                                     Filled status:
                                     <span class="number">{{ item.filledStatus }}</span>
-                                </h5>
+                                </h5> -->
                                 <h5>
                                     Selling:
                                     <span class="number">{{ QuantityFormat(item.TakerGets.values.filled, item.TakerGets.currency)}}/{{ QuantityFormat(item.TakerGets.values.created, item.TakerGets.currency) }} {{ currencyCodeFormat(item.TakerGets.currency, 4) }}</span>
