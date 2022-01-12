@@ -213,14 +213,17 @@ const actions = {
 
 const mutations = {
     setCurrencyPair: (state, obj) => {
-        if(obj.target === 'switch') {
-            state.currencyPair = { base: state.currencyPair.quote, quote: state.currencyPair.base }
-        } else if(obj.target === 'base') {
-            if(obj.amount.currency === 'XRP') state.currencyPair.base = { currency: 'XRP', issuer: null }
-            else state.currencyPair.base = obj.amount
-        } else if(obj.target === 'quote') {
-            if(obj.amount.currency === 'XRP') return state.currencyPair.quote = { currency: 'XRP', issuer: null }
-            else state.currencyPair.quote = obj.amount
+        // todo check if base and quote are the same if true throw error
+        if(obj.switch === true) {
+            return state.currencyPair = { base: state.currencyPair.quote, quote: state.currencyPair.base }
+        }
+        if(obj.target === 'base' || obj.hasOwnProperty('base')) {
+            if(obj?.amount?.currency === 'XRP' || obj?.base?.currency === 'XRP' || obj.base === 'XRP') state.currencyPair.base = { currency: 'XRP', issuer: null }
+            else state.currencyPair.base = obj.hasOwnProperty('base') ? obj.base : obj.amount
+        }
+        if(obj.target === 'quote' || obj.hasOwnProperty('quote')) {
+            if(obj?.amount?.currency === 'XRP' || obj?.quote?.currency || obj.quote === 'XRP') state.currencyPair.quote = { currency: 'XRP', issuer: null }
+            else state.currencyPair.quote = obj.hasOwnProperty('quote') ? obj.quote : obj.amount
         }
     },
     setMarketPrice: (state, arr) => {

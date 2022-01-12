@@ -261,7 +261,7 @@ export default {
                 return 
             }
             if(currency === 'switch') {
-                this.$store.dispatch('changeCurrencyPair', { target: 'switch' })
+                this.$store.dispatch('changeCurrencyPair', { switch: true })
                 this.$emitter.emit('changedCurrency', true)
                 return
             }

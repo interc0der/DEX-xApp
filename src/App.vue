@@ -69,14 +69,37 @@ export default {
                 const data = await xapp.getTokenData(ott)
 
                 if(data.hasOwnProperty('currency') && data.hasOwnProperty('issuer')) {
-                    this.$store.dispatch('changeCurrencyPair', { target: 'quote', amount: { currency: data.currency, issuer: data.issuer } })
+                    if(String(data.base).toLowerCase() === 'true') {
+                        this.$store.dispatch('changeCurrencyPair', { base: { currency: data.currency, issuer: data.issuer }, quote: { currency: 'XRP', issuer: null } })
+                    } else {
+                        this.$store.dispatch('changeCurrencyPair', { quote: { currency: data.currency, issuer: data.issuer } })
+                    }
+                } else if(data.hasOwnProperty('base') && data.hasOwnProperty('quote')) {
+                    const payload = {}
+                    // XUMM doesn't return the '+' sign it converts to a space: 
+                    const baseSplitted = data.base.split(' ', 2)
+                    const quoteSplitted = data.quote.split(' ', 2)
+
+                    if(baseSplitted.length > 1) {
+                        payload.base = {
+                            currency: baseSplitted[0],
+                            issuer: baseSplitted[1]
+                        }
+                    } else if(String(data.base).toUpperCase() === 'XRP') payload.base = 'XRP'
+
+                    if(quoteSplitted.length > 1) {
+                        payload.quote = {
+                            currency: quoteSplitted[0],
+                            issuer: quoteSplitted[1]
+                        }
+                    } else if(String(data.quote).toUpperCase() === 'XRP') payload.quote = 'XRP'
+                    this.$store.dispatch('changeCurrencyPair', payload)
                 }
 
                 if(this.error === this.$t('xapp.error.get_ott_data')) {
                     this.error = false
                     this.wsConnect(data)
                 }
-
                 return data
             } catch(e) {
                 this.error = this.$t('xapp.error.get_ott_data')
