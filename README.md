@@ -1,4 +1,5 @@
-# dex
+# DEX xApp XUMM
+This is the documentation for the DEX xApp
 
 ### Custom Currency
 When opening the xApp with a link youy can pass parameters to the DEX xApp and set a trading pair on startup.

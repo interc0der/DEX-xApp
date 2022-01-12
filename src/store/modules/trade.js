@@ -222,7 +222,7 @@ const mutations = {
             else state.currencyPair.base = obj.hasOwnProperty('base') ? obj.base : obj.amount
         }
         if(obj.target === 'quote' || obj.hasOwnProperty('quote')) {
-            if(obj?.amount?.currency === 'XRP' || obj?.quote?.currency || obj.quote === 'XRP') state.currencyPair.quote = { currency: 'XRP', issuer: null }
+            if(obj?.amount?.currency === 'XRP' || obj?.quote?.currency === 'XRP' || obj.quote === 'XRP') state.currencyPair.quote = { currency: 'XRP', issuer: null }
             else state.currencyPair.quote = obj.hasOwnProperty('quote') ? obj.quote : obj.amount
         }
     },
