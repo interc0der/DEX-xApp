@@ -69,8 +69,10 @@ const getters = {
 
         if(currency === 'XRP') {
             if(typeof state.accountInfo.Balance === undefined) return null
-            const accountReserve = 10_000_000
-            const reserved = state.accountObjects.length * 2_000_000
+            console.log(xrpl.getState().reserve)
+            const accountReserve = xrpl.getState().reserve.base * 1_000_000 || 10_000_000
+            const ownerReserve = xrpl.getState().reserve.owner * 1_000_000 || 2_000_000
+            const reserved = state.accountInfo.OwnerCount * ownerReserve
             const balance = (state.accountInfo.Balance - accountReserve - reserved)
             return balance
         } else {
@@ -102,6 +104,7 @@ const actions = {
         context.commit('setAccountObjects', [])
         context.commit('setAccountTransactions', [])
     },
+
     setAccount: async (context, account) => {
         if(account !== context.state.address) context.dispatch('resetData')
         context.commit('setAccount', account)
