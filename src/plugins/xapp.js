@@ -118,6 +118,25 @@ const payload = async (payload) => {
     }
 }
 
+const setUserData = async (key, payloadJSON) => {
+    try {
+        await axios.post(`${apiEndPoint}/userdata/${key}`, payloadJSON, headers())
+    } catch(e) {
+        console.error('Post userData to XUMM:', e)
+        throw e
+    }
+}
+
+const getUserData = async (key) => {
+    try {
+        const res = await axios.get(`${apiEndPoint}/userdata/${key}`, headers())
+        return res.data.data
+    } catch(e) {
+        console.error('Get userData from XUMM:', e)
+        throw e
+    }
+}
+
 const versionCheck = (v1, v2) => {
     var v1parts = v1.split('.');
     var v2parts = v2.split('.');
@@ -163,6 +182,8 @@ export default {
     getCuratedAssets,
     openExternalBrowser,
     openTxViewer,
+    setUserData,
+    getUserData,
     versionCheck
 }
 

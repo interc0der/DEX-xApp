@@ -1,7 +1,10 @@
 <template>
     <div id="view">
-        <Test v-if="!init" @passed="completedTest" />
-        <Controller v-else-if="ready" />
+        <div v-if="!ready" style="display: flex; width: 100%; height: 100%;">
+            <Spinner style="margin: auto"/>
+        </div>
+        <Test v-else-if="!init" @passed="completedTest" />
+        <Controller v-else />
         <Modal />
         <Alert />
         <div v-if="error" class="column h-100">
@@ -17,6 +20,7 @@
 <script>
 import Controller from '@/views/Controller.vue'
 import Alert from '@/components/Alert.vue'
+import Spinner from '@/components/Spinner.vue'
 import Modal from '@/components/Modal.vue'
 import Test from '@/components/Test.vue'
 
@@ -29,6 +33,7 @@ export default {
 	name: 'App',
 	components: {
         Alert,
+        Spinner,
         Modal,
         Test,
         Controller
@@ -46,6 +51,31 @@ export default {
 		}
 	},
 	methods: {
+        async onboardingCheck() {
+            let initSaved = false
+            try {
+                const dataresult = await xapp.getUserData('onboarding')
+                if(dataresult?.onboarding?.init === true) {
+                    this.init = true
+                    return
+                }
+            } catch(e) {
+                console.error('getting user data')
+            }
+
+            if(localStorage.getItem('onboarding')) {
+                this.init = true
+
+                if(!initSaved) {
+                    try {
+                        await xapp.setUserData('onboarding', { init: true })
+                        // localStorage.removeItem('onboarding')
+                    } catch(e) {
+                        console.error('Error setting data into XUMM:', e)
+                    }
+                }
+            }
+        },
 		async wsConnect(data) {
             try {
                 if(!data) data = await xapp.getTokenData()
@@ -56,7 +86,6 @@ export default {
 
                 this.$store.dispatch('setAccount', data.account)
                 this.error = false
-                this.ready = true
             } catch(e) {
                 this.error = this.$t('xapp.error.subscribe_to_ledger')
                 throw e
@@ -98,7 +127,10 @@ export default {
 
                 if(this.error === this.$t('xapp.error.get_ott_data')) {
                     this.error = false
-                    this.wsConnect(data)
+                    try {
+                        await this.wsConnect(data)
+                        this.ready = true
+                    } catch(e) {}
                 }
                 return data
             } catch(e) {
@@ -121,12 +153,10 @@ export default {
             return 'wss://xrplcluster.com'
         }
 	},
-	created() {
-		if(localStorage.getItem('onboarding')) this.init = true
-	},
 	async mounted() {
 		try {
 			if (typeof window.ReactNativeWebView === 'undefined') {
+                console.warn('THIS IS DEVMODE')
                 const data = {
                     // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg',
                     // account: 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm',
@@ -146,6 +176,12 @@ export default {
                 await this.wsConnect(data)
             }
 		} catch(e) { return }
+
+        try {
+            await this.onboardingCheck()
+        } catch(e) {
+            console.error('onboarding check',)
+        }
 
         this.ready = true
 

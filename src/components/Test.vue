@@ -102,13 +102,18 @@ export default {
                 })
             }
         },
-        check() {
+        async check() {
             this.questions.forEach((element, index) => {
                 if(element.answer_index !== this.answers[index]) {
                     this.wrongAnswerIndex.push(index)
                 }
             })
             if(this.wrongAnswerIndex.length <= this.requirement) {
+                try {
+                    await xapp.setUserData('onboarding', { init: true })
+                } catch(e) {
+                    console.error('Setting the onboarding data to XUMM')
+                }
                 localStorage.setItem('onboarding', true)
             }
             this.finished = true
