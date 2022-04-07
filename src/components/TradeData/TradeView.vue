@@ -31,11 +31,12 @@
             </label>
         </div>
         <div class="chart-view-container">
-            <div id="chart-loader">
+            <!-- <div id="chart-loader">
                 <Spinner v-if="chartLoading"/>
                 <h2 v-else-if="!chartAvailable">no chart data available</h2>
-            </div>
-            <div id="chart-view"></div>
+            </div> -->
+            <!-- <div id="chart-view"></div> -->
+            <span>The chart is temporary removed due to issues with the data, please be patient until our devs have fixed the issue.</span>
         </div>
     </div>
 </template>
@@ -72,12 +73,12 @@ export default {
             }
         }
     },
-    watch: {
-        '$store.getters.getChartData': function() {
-            console.log('Chart update data')
-            this.setChartData()
-        }
-    },
+    // watch: {
+    //     '$store.getters.getChartData': function() {
+    //         console.log('Chart update data')
+    //         this.setChartData()
+    //     }
+    // },
     methods: {
         initChart() {
             var style = getComputedStyle(document.body)
@@ -271,9 +272,9 @@ export default {
     mounted() {
         // this.$store.dispatch('getChartData')
 
-        this.$emitter.on('tradeDataUpdate', (data) => {
-            this.updateChart(data)
-        })
+        // this.$emitter.on('tradeDataUpdate', (data) => {
+        //     this.updateChart(data)
+        // })
     }
 }
 </script>
