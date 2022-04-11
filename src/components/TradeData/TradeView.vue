@@ -36,7 +36,7 @@
                 <h2 v-else-if="!chartAvailable">no chart data available</h2>
             </div> -->
             <!-- <div id="chart-view"></div> -->
-            <span>The chart is temporary removed due to issues with the data, please be patient until our devs have fixed the issue.</span>
+            <span>The chart is temporary disabled while we work on improving the chart data provider. As users have pointed out, the data provider we previously used wasn't always up to date with the XRP Ledger order books. We're working on it!</span>
         </div>
     </div>
 </template>
