@@ -1,46 +1,64 @@
 <template>
     <div class="container">
-        <table id="orderbook">
-            <tr>
-                <th class="price">{{ $t('xapp.order_book.price') }}</th>
-                <th class="quantity">{{ $t('xapp.order_book.quantity') }}</th>
-            </tr>
+
+        <div class="orderbook-container">
+            <span class="price">{{ $t('xapp.order_book.price') }}</span>
+            <span class="quantity">{{ $t('xapp.order_book.quantity') }}</span>
+
+            <!-- Row 2 -->
             <template v-if="askSide.length > 0 && isReady">
-                <tr v-for="order in askSide">
-                    <td class="price sell number" @click="emitPrice(order.price)">{{ priceFormat(order.price) }}</td>
-                    <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
-                </tr>
-            </template>
-            <template v-else>
-                <tr v-for="index in 5">
-                    <td class="price sell number">--</td>
-                    <td class="quantity number">--</td>
-                </tr>
-            </template>
+                <div v-for="(order, index) in askSide" class="orderbook-grid-row-wrapper">
+                    
+                    <span :style="{ 'grid-row': index + 2, 'grid-column': 1, 'z-index': 2 }" class="price sell number" @click="emitPrice(order.price)">
+                        {{ priceFormat(order.price) }}
+                    </span>
+                    <span :style="{ 'grid-row': index + 2, 'grid-column': 2, 'z-index': 2 }" class="quantity number">{{ QuantityFormat(order.quantity) }}</span>
 
-            <tr>
-                <td class="number" style="width: 100%" colspan="2">
-                    <div id="market-row">
-                        <span id="market-price" :class="{'buy': marketTrend > 0, 'sell': marketTrend < 0}" @click="emitPrice(marketPrice)">
-                            <fa class="market-price-trend-svg" size="xs" v-if="marketTrend > 0" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else-if="marketTrend < 0" :icon="['fa', 'arrow-down']" />{{ marketPriceError ? '--' : priceFormat(marketPrice) }}
-                        </span>
+                    <div class="volume-bar-wrapper" :style="{ 'grid-row': index + 2 }">
+                        <div class="volume-bar-indicator red" :style="{ width: $store.getters.getIndicatorProgress(order.quantity, 'ask') }"></div>
                     </div>
-                </td>
-            </tr>
+                        
+                </div>
+            </template>
 
-            <template v-if="bidSide.length > 0 && isReady">
-                <tr v-for="order in bidSide">
-                    <td class="price buy number" @click="emitPrice(order.price)">{{ priceFormat(order.price) }}</td>
-                    <td class="quantity number">{{ QuantityFormat(order.quantity) }}</td>
-                </tr>
-            </template>
             <template v-else>
-                <tr v-for="index in 5">
-                    <td class="price buy number">--</td>
-                    <td class="quantity number">--</td>
-                </tr>
+                <div v-for="index in 5" class="orderbook-grid-row-wrapper">
+                    <span class="price sell number">--</span>
+                    <span class="quantity number">--</span>
+                </div>
             </template>
-        </table>
+
+            <!-- Row 7 -->
+            <div id="market-row" class="number">
+                <span id="market-price" :class="{'buy': marketTrend > 0, 'sell': marketTrend < 0}" @click="emitPrice(marketPrice)">
+                    <fa class="market-price-trend-svg" size="xs" v-if="marketTrend > 0" :icon="['fa', 'arrow-up']" /><fa class="market-price-trend-svg" size="xs" v-else-if="marketTrend < 0" :icon="['fa', 'arrow-down']" />{{ marketPriceError ? '--' : priceFormat(marketPrice) }}
+                </span>
+            </div>
+
+
+            <!-- start row 8 -->
+            <template v-if="bidSide.length > 0 && isReady">
+                <div v-for="(order, index) in bidSide" class="orderbook-grid-row-wrapper">
+
+                    <span :style="{ 'grid-row': index + 8, 'grid-column': 1, 'z-index': 2 }" class="price buy number" @click="emitPrice(order.price)">{{ priceFormat(order.price) }}</span>
+                    <span :style="{ 'grid-row': index + 8, 'grid-column': 2, 'z-index': 2 }" class="quantity number">{{ QuantityFormat(order.quantity) }}</span>
+
+
+                    <div class="volume-bar-wrapper" :style="{ 'grid-row': index + 8 }">
+                        <div class="volume-bar-indicator green" :style="{ width: $store.getters.getIndicatorProgress(order.quantity, 'bid') }"></div>
+                    </div>
+                </div>
+            </template>
+
+            <template v-else>
+                <div v-for="index in 5" class="orderbook-grid-row-wrapper">
+                    <span class="price buy number">--</span>
+                    <span class="quantity number">--</span>
+                </div>
+            </template>
+
+
+        </div>
     </div>
 </template>
 
@@ -167,10 +185,12 @@ export default {
         }
     },
     mounted() {
+        this.$store.dispatch('getOrderBookData')
+
+
         this.liquidityCheck()
 
         let self = this
-
         this.$emitter.on('changedCurrency', data => {
             self.liquidityCheck()
         })
@@ -179,43 +199,86 @@ export default {
 </script>
 
 <style scoped>
-#orderbook {
-    /* height: 100%; */
+.orderbook-container {
     width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: minmax(20px, 1fr);
     font-size: 1rem;
 }
-table td {
-    width: 50%;
+.orderbook-grid-row-wrapper {
+    display: contents;
+    height: 20px;
+}
+.orderbook-grid-row-wrapper > span {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+    text-align: center;
+    padding: 2px 10px;
+}
+.orderbook-grid-row-wrapper > span:nth-child(2) {
+    margin-left: auto;
+}
+.volume-bar-indicator {
+    position: absolute;
+
+    width: 0;
+    top: 0;
+    right: 0;
+
+    /* background-color: rgba(255, 0, 0, 0.2); */
+    height: 100%;
+
+}
+.volume-bar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    grid-column-start: 1;
+    grid-column-end: span 2;
+    z-index: 1;
 }
 #market-row {
+    grid-column-start: 1;
+    grid-column-end: span 2;
+
     display: flex;
     flex-direction: row;
     white-space: nowrap;
-    width: 100%;
 }
 #market-price {
-    padding: 10px 0;
+    /* padding: 10px 0; */
     font-size: 20px;
     font-weight: 600;
     display: flex;
     flex-direction: row;
     align-items: center;
-    margin: auto
+    margin: auto;
 }
 .market-price-trend-svg {
     transform: scale(0.8);
 }
-#orderbook .price {
+.price {
     /* font-weight: 600; */
     text-align: start;
 }
-#orderbook .quantity {
+.quantity {
     text-align: end;
 }
-#orderbook .sell {
+.sell {
     color: var(--red);
 }
-#orderbook .buy {
+.buy {
     color: var(--green);
+}
+.volume-bar-indicator.red {
+    background-color: var(--red);
+    opacity: 0.2;
+}
+.volume-bar-indicator.green {
+    background-color: var(--green);
+    opacity: 0.2;
 }
 </style>

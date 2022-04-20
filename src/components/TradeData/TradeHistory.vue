@@ -1,50 +1,53 @@
 <template>
-    <table>
-        <!-- <colgroup>
-            <col span="1" style="width: 100px;">
-            <col span="1" style="width: 50%;">
-            <col span="1" style="width: 100%;">
-        </colgroup> -->
+    <div class="trade-data-table-wrapper">
+        <table>
+            <colgroup>
+                <col span="1">
+                <col span="1">
+                <col span="1" style="width: 70px;">
+            </colgroup>
 
-        <thead>
-            <tr>
-                <th style="width: 100px;">Time Stamp</th>
-                <!-- <th>Direction</th> -->
-                <th>Price</th>
-                <th>QTY</th>
-            </tr>
-        </thead>
+            <thead>
+                <tr>
+                    <th>Price</th>
+                    <th>QTY</th>
+                    <th>Time Stamp</th>
+                </tr>
+            </thead>
 
-        <tbody v-if="tradeHistory.length > 0">
-            <tr v-for="(item, index) in tradeHistory">
+            <tbody v-if="tradeHistory.length > 0">
+                <tr v-for="(item, index) in tradeHistory">
 
-                <!-- Last in Array -->
-                <template v-if="index === (tradeHistory.length - 1)">
-                    <td class="number">{{ formatTime(tradeHistory[index]?.executed_time) }}</td>
-                    <td class="number buy">
-                        {{ priceFormat(tradeHistory[index]?.rate) }}
-                        <fa class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
-                    </td>
-                    <td class="number">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
-                </template>
+                    <!-- Last in Array -->
+                    <template v-if="index === (tradeHistory.length - 1)">
+                        <td class="number buy price">
+                            {{ priceFormat(tradeHistory[index]?.rate) }}
+                            <fa class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
+                        </td>
+                        <td class="number quantity">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
+                        <td class="number timestamp">{{ formatTime(tradeHistory[index]?.executed_time) }}</td>
+                    </template>
 
-                <template v-else>
-                    <td class="number">{{ formatTime(tradeHistory[index].executed_time) }}</td>
-                    <!-- <td class="sell">NA</td> -->
-                    <td :class="{'buy': tradeHistory[index + 1].rate < tradeHistory[index].rate, 'sell': !tradeHistory[index + 1].rate < tradeHistory[index].rate}" class="number">
-                        {{ priceFormat(tradeHistory[index].rate) }}
-                        <fa v-if="tradeHistory[index + 1].rate < tradeHistory[index]?.rate" class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
-                        <fa v-else class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-down']" />
-                    </td>
-                    <td class="number">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
-                </template>
-            </tr>
-        </tbody>
-        <div v-else>
-            <i>🚀</i>
-            <h4>No trade history data available</h4>
-        </div>
-    </table>
+                    <template v-else>
+                        <td 
+                            class="number price"
+                            :class="{'buy': tradeHistory[index + 1].rate < tradeHistory[index].rate, 'sell': !tradeHistory[index + 1].rate < tradeHistory[index].rate}">
+                                
+                                {{ priceFormat(tradeHistory[index].rate) }}
+                                <fa v-if="tradeHistory[index + 1].rate < tradeHistory[index]?.rate" class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-up']" />
+                                <fa v-else class="market-price-trend-svg" size="xs" :icon="['fa', 'arrow-down']" />
+                        </td>
+                        <td class="number quantity">{{ quantityFormat(tradeHistory[index]?.base_amount) }}</td>
+                        <td class="number timestamp">{{ formatTime(tradeHistory[index].executed_time) }}</td>
+                    </template>
+                </tr>
+            </tbody>
+            <div v-else>
+                <i>🚀</i>
+                <h4>No trade history data available</h4>
+            </div>
+        </table>
+    </div>
 </template>
 <script>
 import { quantityFormat, priceFormat } from '../../plugins/number-format'
@@ -77,11 +80,14 @@ export default {
 </script>
 
 <style scoped>
+.trade-data-table-wrapper {
+    height: 100%;
+    overflow-y: auto;
+}
 table {
     border-collapse: collapse;
     width: 100%;
     margin-top: 10px;
-    margin-bottom: 60px;
 }
 th {
     color: var(--grey);
@@ -93,7 +99,20 @@ tbody {
     font-size: 0.8rem;
 }
 tbody td {
-    height: 40px;
+    height: 1.2rem;
+}
+tbody td.price {
+    text-align: left;
+    padding-left: 10px;
+    margin: auto;
+}
+tbody td.quantity {
+    text-align: right;
+    padding-right: 15px;
+}
+tbody td.timestamp {
+    text-align: right;
+    padding-right: 10px;
 }
 tbody tr:nth-child(even) {
     background-color: var(--grey5);

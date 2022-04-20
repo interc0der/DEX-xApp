@@ -4,6 +4,11 @@
             <div class="tabs">
                 <span @click="activeTabIndex = 0">{{ $t('xapp.orders.orders') }} ({{ Object.keys(offers).length }})</span>
                 <!-- <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span> -->
+
+                <template v-if="desktop">
+                    <span></span>
+                    <span></span>
+                </template>
             </div>
             <div class="redirect-btn-group">
                 <a @click="openTradeDataView()" style="margin-right: 10px;">
@@ -26,10 +31,11 @@
             <i>🚀</i>
             <h4>{{ $t('xapp.orders.no_history_orders') }}</h4>
         </div>
+
         <div v-else class="table-wrapper">
             <div class="table-container">
 
-                <template v-if="activeTabIndex === 0">
+                <template v-if="activeTabIndex === 0 && !desktop">
                     <div class="order-item" v-for="(item, seq, index) in offers" :key="seq">
                         <div class="row" style="margin: 0; padding-left: 5px;">
                             <label v-if="getOrderTrade(item)" class="trade-label" :class="getOrderTrade(item)">{{ getOrderTrade(item) }}</label>
@@ -81,8 +87,12 @@
                     </div>
                 </template>
 
-                <template v-else-if="activeTabIndex === 1">
+                <!-- <template v-else-if="activeTabIndex === 1">
                     Not available
+                </template> -->
+
+                <template v-else>
+                    <AccountEvents />
                 </template>
             </div>
         </div>
@@ -95,12 +105,15 @@ import { currencyFormat, currencyCodeFormat, epochToDate, quantityFormat, priceF
 
 import SpinnerButton from '@/components/SpinnerButton.vue'
 
+import AccountEvents from '@/components/AccountEvents.vue'
+
 export default {
-    components: { SpinnerButton },
+    components: { SpinnerButton, AccountEvents },
     data() {
         return {
             activeTabIndex: 0,
-            txs: []
+            txs: [],
+            desktop: true
         }
     },
     computed: {
@@ -209,20 +222,23 @@ export default {
 </script>
 
 <style scoped>
+.test {
+    display: flex;
+    overflow: hidden;
+}
+
 .number {
     font-size: 0.8rem;
 }
 #offers {
-    /* height: 100%; */
-    /* display: flex;
-    flex-flow: column; */
-    /* height: inherit; */
-    flex: 1 1 0;
+    height: inherit;
     overflow: hidden;
 }
 .tab-head {
     display: flex;
     flex-direction: row;
+    height: 24px;
+    margin: 5px 0;
 }
 .tab-head .tabs {
     font-size: 1rem;
@@ -247,6 +263,7 @@ export default {
     display: flex;
     flex-direction: row;
     overflow: hidden;
+    height: calc(100% - 35px);
 }
 /* Overflow container */
 .table-container {

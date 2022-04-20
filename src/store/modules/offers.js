@@ -737,6 +737,7 @@ const mutations = {
         if(!state.offers.hasOwnProperty(seq)) return console.log('Setting FilledStatus to Offer Without TX history/sequence available')
 
         const offerState = state.offers[seq]
+        
         offerState.filledStatus = 'filled'
     },
     resetOfferState: (state) => {

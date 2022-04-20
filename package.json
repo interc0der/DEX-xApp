@@ -18,6 +18,7 @@
     "mitt": "^3.0.0",
     "redaxios": "^0.4.1",
     "ripple-lib-transactionparser": "^0.8.2",
+    "trading-charts": "^0.2.3",
     "vue": "^3.0.0",
     "vue-i18n": "^9.1.6",
     "vuex": "^4.0.0-0",

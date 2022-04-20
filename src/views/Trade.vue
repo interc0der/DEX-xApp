@@ -5,7 +5,7 @@
         <div class="row padding">
             <TradeForm />
             <hr class="vertical-devider">
-            <OrderBook />
+            <OrderBook style="max-width: 170px; min-width: 150px; width: 40%"/>
         </div>
         <hr class="spacer">
         <TradeData />
@@ -20,9 +20,29 @@ import TradeForm from '@/components/TradeForm.vue'
 
 export default {
     components: { TradeData, OrderBook, TradeHeader, TradeForm },
+    data() {
+        return {
+            windowHeight: window.innerHeight,
+            windowWidth: window.innerWidth
+        }
+    },
+    methods: {
+        onResize() {
+            this.windowHeight = window.innerHeight
+            this.windowWidth = window.innerWidth
+        }
+    },
     beforeMount() {
         this.$store.dispatch('getTradeHistory')
         this.$store.dispatch('setLastTradedPrice')
+    },
+    mounted() {
+        this.$nextTick(() => {
+            window.addEventListener('resize', this.onResize);
+        })
+    },
+    beforeUnmount() {
+        window.removeEventListener('resize', this.onResize)
     }
 }
 </script>

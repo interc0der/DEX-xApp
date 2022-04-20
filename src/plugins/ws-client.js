@@ -2,7 +2,7 @@ import { XrplClient } from 'xrpl-client'
 
 let ws = null
 
-const connect = async (url, options) => {
+const connect = (url, options) => {
     if (ws != null) return ws
     try {
         ws = new XrplClient(url, options)

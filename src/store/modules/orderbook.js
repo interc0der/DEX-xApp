@@ -20,6 +20,22 @@ const getters = {
     },
     getOrderBookReadyState: state => {
         return state.ready
+    },
+    getIndicatorProgress: state => (value, side) => {
+        if(side !== 'ask' && side !== 'bid') throw new Error('Specify the side of the book, either ask or bid')
+        if(isNaN(value)) throw new Error('Needs a value')
+        const arr = state[`${side}s`]
+
+        const tot = arr[arr.length - 1].total
+        const avg = tot / arr.length
+        
+        const max100 = avg / 50 * 100
+
+        const progress = value / max100 > 1 ? 1 : (value / max100).toFixed(2)
+
+        const percentageString = (progress * 100).toFixed(0) + '%'
+        
+        return percentageString
     }
 }
 
