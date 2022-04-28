@@ -1,61 +1,66 @@
 <template>
-    <div id="light-chart"></div>
+    <div v-if="loading" class="spinner-container">
+        <div class="spinner-wrapper">
+            <Spinner />
+        </div>
+    </div>
+    <div v-show="!loading" id="light-chart"></div>
 </template>
 
 <script>
 import CandlestickChart from 'trading-charts'
-// import CandlestickChart from '../plugins/CandlestickChartDiv'
-
-import axios from 'redaxios'
+import Spinner from '@/components/Spinner.vue'
 
 export default {
+    components: { Spinner },
     data() {
         return {
-
+            init: false,
+            candlestickChart: null,
+            loading: false
         }
     },
     computed: {
-        interval: {
-            get() {
-                return this.$store.getters.getSelectedChartInterval
-            },
-            set(value) {
-                this.$store.dispatch('setChartInterval', value)
-            }
+        interval() {
+            const data = this.$store.getters.getSelectedChartInterval
+            return data
         },
         chartData() {
             const data = this.$store.getters.getChartData
             return data
         }
     },
-    methods: {
-        setChartData(candlestickChart) {
-            console.log('set data...')
-            // var json = await axios.get("https://api.binance.com/api/v3/klines?symbol=XRPUSDT&interval=5m&limit=500")
-            // json = json.data
-            // for (let i = 0 ; i < json.length ; ++i) {
-            //     candlestickChart.addCandlestick( json[i][0] , json[i][1] , json[i][2] , json[i][3] , json[i][4] )
-            // }
-
-            const data = this.chartData
-            console.log(data[0])
-
-            data.forEach(entry => {
-                candlestickChart.addCandlestick(Date.parse(entry.start), entry.open, entry.high, entry.low, entry.close)
-            })
-            candlestickChart.draw()
+    watch: {
+        '$store.getters.getChartData': function() {
+            if(this.init) {
+                console.log('Chart update data')
+                this.initChart()
+                this.setChartData()
+            }
         }
     },
-    async mounted() {
-        try {
-            await this.$store.dispatch('getChartData')
+    methods: {
+        setChartData() {
+            console.log('set chart data...')
+            const data = this.chartData
+            // console.log(data[0])
+
+            data.forEach(entry => {
+                this.candlestickChart.addCandlestick(Date.parse(entry.start), entry.open, entry.high, entry.low, entry.close)
+            })
+            this.candlestickChart.draw()
+
+            this.loading = false
+        },
+        initChart() {
+            this.loading = true
 
             var style = getComputedStyle(document.body)
             const bg = style.getPropertyValue('--var-bg-color')
             const green = style.getPropertyValue('--green')
             const red = style.getPropertyValue('--red')
 
-            var candlestickChart = new CandlestickChart('light-chart',
+            this.candlestickChart = new CandlestickChart('light-chart',
                 {
                     fillWidth : true,
                     fillHeight : true,
@@ -76,11 +81,19 @@ export default {
                     gridColor: '#000',
                     yGridCells: 5
                 })
+        }
+    },
+    async mounted() {
+        try {
+            await this.$store.dispatch('getChartData')
 
-            this.setChartData(candlestickChart)
+            this.initChart()
+            this.setChartData()
+            this.init = true
 
         } catch(e) {
             console.error('light-chart-error:', e)
+            this.loading = false
         }
         return
     }
@@ -88,8 +101,13 @@ export default {
 </script>
 
 <style scoped>
-#light-chart {    
-    /* height: inherit;
-    width: inherit; */
+.spinner-container {
+    height: inherit;
+    width: inherit;
+    display: flex;
+    align-items: center;
+}
+.spinner-wrapper {
+    margin: auto;
 }
 </style>

@@ -41,18 +41,16 @@ export default {
         return {
             activeChart: 'Basic', // Basic/Mobile || Depth
             availableCharts: ['Basic', 'TradingView', 'Depth'],
-            resolutions: ['1m', '5m', '1h', '4h', 'D', 'W', 'M'],
-            selectedResolution: '4h'
+            resolutions: ['1m', '5m', '1h', '4h', 'D', 'W', 'M']
         }
     },
     computed: {
         interval: {
             get() {
-                return this.selectedResolution
+                return this.$store.getters.getSelectedChartInterval
             },
             set(value) {
-                this.selectedResolution = value
-                alert('todo, change resolution for charts')
+                this.$store.dispatch('setChartInterval', value)
             }
         },
         parentHeight() {

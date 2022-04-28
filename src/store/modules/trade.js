@@ -18,7 +18,7 @@ const state = {
     },
     tradeHistory: [],
     chartData: [],
-    selectedChartInterval: '4hour',
+    selectedChartInterval: '4h',
     tickerData: []
 }
 
@@ -53,10 +53,9 @@ const getters = {
 }
 
 const actions = {
-    setChartInterval: (context, interval) => {
+    setChartInterval: async (context, interval) => {
         context.commit('setChartInterval', interval)
-        context.dispatch('getChartData')
-        return
+        return await context.dispatch('getChartData')
     },
     changeCurrencyPair: (context, obj) => {
         context.commit('setCurrencyPair', obj)
@@ -125,8 +124,37 @@ const actions = {
         // unix timestamp
         // https://api.sologenic.org/api/v1/ohlc?symbol=USD%2BrD9W7ULveavz8qBGM1R5jMgK2QKsEDPQVi%2FXRP&period=1m&from=1611007200&to=1611070980
 
+        const intervalConvert = value => {
+            switch(value) {
+                case '1m':
+                    return '1minute'
+                case '5m':
+                    return '5minute'
+                case '15m':
+                    return '15minute'
+                case '30m':
+                    return '30minute'
+                case '1h':
+                    return '1hour'
+                case '2h':
+                    return '2hour'
+                case '4h':
+                    return '4hour'
+                case 'D':
+                    return '1day'
+                case 'W':
+                    return '7day'
+                case 'M':
+                    return '1month' 
+                default:
+                    throw new Error('Not supported chart interval')
+            }
+        }
+
+        const interval = intervalConvert(context.getters.getSelectedChartInterval)
+
         const endpoint = 'https://data.ripple.com/v2/exchanges/'
-        const options = `?descending=true&result=tesSUCCESS&limit=1000&interval=${context.getters.getSelectedChartInterval}`
+        const options = `?descending=true&result=tesSUCCESS&limit=1000&interval=${interval}`
         const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
         const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
         const call = `${endpoint}${currency1}/${currency2}${options}`
