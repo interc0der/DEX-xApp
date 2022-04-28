@@ -85,6 +85,7 @@ export default {
     },
     async mounted() {
         try {
+            this.loading = true
             await this.$store.dispatch('getChartData')
 
             this.initChart()
@@ -95,7 +96,6 @@ export default {
             console.error('light-chart-error:', e)
             this.loading = false
         }
-        return
     }
 }
 </script>
