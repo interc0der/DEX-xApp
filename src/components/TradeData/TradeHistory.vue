@@ -10,7 +10,7 @@
             <thead>
                 <tr>
                     <th>Price</th>
-                    <th>QTY</th>
+                    <th class="quantity">Quantity</th>
                     <th>Time Stamp</th>
                 </tr>
             </thead>
@@ -105,6 +105,10 @@ tbody td.price {
     text-align: left;
     padding-left: 10px;
     margin: auto;
+}
+thead th.quantity {
+    text-align: right;
+    padding-right: 15px;
 }
 tbody td.quantity {
     text-align: right;
