@@ -1,5 +1,5 @@
 <template>
-    <div id="view">
+    <div id="browser-view">
         <div name="header">
             <Header />
         </div>
@@ -69,10 +69,6 @@ import AccountEvents from '@/components/AccountEvents.vue'
 
 import Footer from '../components/Footer.vue'
 
-
-import client from '../plugins/ws-client'
-import client2 from '../plugins/ws-client-secondary'
-
 export default {
     components: {
         Header,
@@ -84,7 +80,7 @@ export default {
 
         AccountData,
         AccountEvents,
-        
+
         Footer
     },
     data() {
@@ -95,14 +91,11 @@ export default {
     },
     async created() {
         try {
-            client.connect(this.$store.getters.getWebSocketUrl(), { NoUserAgent: true, MaxConnectTryCount: 5 })
-            client2.connect(this.$store.getters.getWebSocketUrl(), { NoUserAgent: true, MaxConnectTryCount: 5 })
+            this.$store.dispatch('connectToNode')
         } catch(e) {
             console.error('WebSocket error:', e)
             alert(e)
         }
-
-
 
         this.$store.dispatch('getTradeHistory')
         this.$store.dispatch('setLastTradedPrice')
@@ -124,7 +117,7 @@ export default {
 }
 @media only screen
     and (max-width: 560px) {
-        #view {
+        #browser-view {
             display: grid;
             grid-template-columns: 1.5fr 150px;
             grid-template-rows: minmax(64px, auto) 1fr 1.6fr;
@@ -158,7 +151,7 @@ export default {
     and (min-width: 560px)
     and (max-width: 1024px)
     and (orientation: portrait) {
-        #view {
+        #browser-view {
             display: grid;
             /* width: 100vw; */
             /* height: 100vh; */
@@ -185,7 +178,7 @@ export default {
     and (min-width: 560px)
     and (max-width: 1024px)
     and (orientation: landscape) {
-        #view {
+        #browser-view {
             display: grid;
             /* width: 100vw; */
             /* height: 100vh; */
@@ -213,7 +206,7 @@ export default {
 @media only screen
     and (min-width: 1024px)
     and (max-width: 1760px) {
-        #view {
+        #browser-view {
             display: grid;
             /* width: 100vw; */
             /* height: 100vh; */
@@ -241,7 +234,7 @@ export default {
 @media only screen
     and (min-width: 1760px)
     and (max-width: 2040px) {
-        #view {
+        #browser-view {
             display: grid;
             /* width: 100vw; */
             /* height: 100vh; */
@@ -271,7 +264,7 @@ export default {
 
 @media only screen
     and (min-width: 2040px) {
-        #view {
+        #browser-view {
             display: grid;
             /* width: 100vw; */
             /* height: 100vh; */
@@ -296,7 +289,7 @@ export default {
         }
     }
 
-#view > * {
+#browser-view > * {
     background-color: var(--var-bg-color);
 }
 
