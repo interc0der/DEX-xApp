@@ -4,11 +4,6 @@
             <div class="tabs">
                 <span @click="activeTabIndex = 0">{{ $t('xapp.orders.orders') }} ({{ Object.keys(offers).length }})</span>
                 <!-- <span @click="toggleAccountTx()">{{ $t('xapp.orders.history') }}</span> -->
-
-                <template v-if="desktop">
-                    <span></span>
-                    <span></span>
-                </template>
             </div>
             <div class="redirect-btn-group">
                 <a @click="openTradeDataView()" style="margin-right: 10px;">
@@ -113,7 +108,7 @@ export default {
         return {
             activeTabIndex: 0,
             txs: [],
-            desktop: true
+            desktop: false
         }
     },
     computed: {
