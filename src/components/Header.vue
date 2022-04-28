@@ -1,0 +1,123 @@
+<template>
+    <header>
+        <a class="logo-header">
+            <img src="../assets/png/xumm.png">
+        </a>
+
+        <label v-show="account">{{ `${account.slice(0, 4)}...${account.slice(-4)}` }}</label>
+
+        <!-- <div class="navbar-items">
+            <div class="navbar-item">Buy Crypto</div>
+            <div class="navbar-item">Markets</div>
+            <div class="navbar-item">Trade</div>
+            <div class="navbar-item">Finance</div>
+        </div> -->
+
+        <div class="signin-button">
+            <a @click="signIn()" class="btn btn-primary">SignIn</a>
+        </div>
+
+        <div class="options">
+            <a>
+                <fa :icon="['fas', 'bars']" />
+            </a>
+            <a>
+                <fa :icon="['fas', 'cog']" />
+            </a>
+            <a>
+                <fa :icon="['fas', 'question-circle']" />
+            </a>
+        </div>
+    </header>
+</template>
+
+<script>
+import client from '../plugins/ws-client'
+import client2 from '../plugins/ws-client-secondary'
+
+export default {
+    computed: {
+        account() {
+            return this.$store.getters.getAccount
+        }
+    },
+    methods: {
+        async signIn() {
+            // todo signin method
+
+            // const account = 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk'
+            const account = 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm'
+            this.$store.dispatch('setAccount', account)
+
+            try {
+                client.send({
+                    command: 'subscribe',
+                    accounts: [this.$store.getters.getAccount]
+                })
+            } catch(e) {
+                const error = this.$t('xapp.error.subscribe_to_account')
+                alert(error)
+                // todo alert
+            }
+
+            client.on('transaction', tx => {
+                this.$store.dispatch('parseTx', { transaction: tx, notify: true })
+                
+            })
+
+            client2.on('transaction', tx => {
+                this.$store.dispatch('parseOrderBookChanges', { tx, emitter: this.$emitter })
+            })
+
+        }
+    }
+}
+</script>
+
+<style scoped>
+header {
+    display: flex;
+    flex-direction: row;
+    /* justify-content: space-between; */
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+.logo-header {
+    margin: 0 20px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.logo-header > img {
+    max-height: 30px;
+}
+.navbar-items {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+.signin-button {
+    margin-left: auto;
+    margin-right: 20px;
+}
+.signin-button > a {
+    padding: 0 10px;
+}
+.options {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100px;
+    /* margin-left: auto; */
+}
+.options > a {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+.options > a > svg {
+    margin: auto;
+}
+</style>

@@ -2,51 +2,50 @@
     <div id="trade-view-container">
         <div id="chart-view-options-row" class="number">
             <label>
-                <input type="radio" value="1hour" name="chart-interval" v-model="interval">
+                <input type="radio" value="1h" name="chart-interval" v-model="interval">
                 <span>1h</span>
             </label>
             <label>
-                <input type="radio" value="2hour" name="chart-interval" v-model="interval">
+                <input type="radio" value="2h" name="chart-interval" v-model="interval">
                 <span>2h</span>
             </label>
             <label>
-                <input type="radio" value="4hour" name="chart-interval" v-model="interval">
+                <input type="radio" value="4h" name="chart-interval" v-model="interval">
                 <span>4h</span>
             </label>
             <label>
-                <input type="radio" value="1day" name="chart-interval" v-model="interval">
-                <span>1d</span>
+                <input type="radio" value="D" name="chart-interval" v-model="interval">
+                <span>D</span>
             </label>
             <label>
-                <input type="radio" value="3day" name="chart-interval" v-model="interval">
-                <span>3d</span>
+                <input type="radio" value="W" name="chart-interval" v-model="interval">
+                <span>W</span>
             </label>
             <label>
-                <input type="radio" value="7day" name="chart-interval" v-model="interval">
-                <span>7d</span>
-            </label>
-            <label>
-                <input type="radio" value="1month" name="chart-interval" v-model="interval">
-                <span>1m</span>
+                <input type="radio" value="M" name="chart-interval" v-model="interval">
+                <span>M</span>
             </label>
         </div>
         <div class="chart-view-container">
+            <LightChart />
             <!-- <div id="chart-loader">
                 <Spinner v-if="chartLoading"/>
                 <h2 v-else-if="!chartAvailable">no chart data available</h2>
             </div> -->
             <!-- <div id="chart-view"></div> -->
-            <span>The chart is temporary disabled while we work on improving the chart data provider. As users have pointed out, the data provider we previously used wasn't always up to date with the XRP Ledger order books. We're working on it!</span>
+            <!-- <span>The chart is temporary disabled while we work on improving the chart data provider. As users have pointed out, the data provider we previously used wasn't always up to date with the XRP Ledger order books. We're working on it!</span> -->
         </div>
     </div>
 </template>
 
 <script>
-import { createChart, CrosshairMode } from 'lightweight-charts'
+import LightChart from '@/components/LightChart.vue'
+
+// import { createChart, CrosshairMode } from 'lightweight-charts'
 import Spinner from '@/components/Spinner.vue'
 
 export default {
-    components: { Spinner },
+    components: { Spinner, LightChart },
     data() {
         return {
             candleSeries: undefined,

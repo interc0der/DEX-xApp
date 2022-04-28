@@ -2,7 +2,7 @@ import { XrplClient } from 'xrpl-client'
 
 let ws = null
 
-const connect = async (url, options) => {
+const connect = (url, options) => {
     if (ws != null) return ws
     try {
         ws = new XrplClient(url, options)
@@ -14,15 +14,14 @@ const connect = async (url, options) => {
 }
 
 const getState = () => {
-    return ws.getState()
+    if(ws === null) return null
+    else return ws.getState()
 }
 
-const close = () => {
-    ws.close().then(closeInfo => {
-        console.log('Closed', closeInfo)
-    }).catch(error => {
-        console.log('Close error', error)
-    })
+const close = async () => {
+    const closeInfo = await ws.close()
+    console.log('Closed', closeInfo)
+    ws = null
 }
 
 const send = async (command) => {

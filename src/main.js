@@ -1,16 +1,29 @@
 import { createApp } from 'vue'
 import App from './App.vue'
+import Desktop from './views/Desktop.vue'
 import store from './store'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faArrowLeft, faArrowRight, faArrowDown, faLevelDownAlt,faSignInAlt, faTimesCircle, faExclamationCircle, faArrowUp, faTimes, faCaretRight, faCaretUp, faCaretDown, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faArrowRight, faArrowDown, faLevelDownAlt,faSignInAlt, faTimesCircle, faExclamationCircle, faArrowUp, faTimes, faCaretRight, faCaretUp, faCaretDown, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory, faChartLine, faBars, faCog, faQuestionCircle, faWifi, faExternalLinkAlt, faTrashAlt } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 import Notifications from '@kyvg/vue3-notification'
 
-library.add(faArrowLeft, faArrowRight, faArrowUp, faArrowDown, faLevelDownAlt, faSignInAlt, faTimesCircle, faTimes, faExclamationCircle, faCaretRight, faCaretUp, faCaretDown, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory, faChartLine)
+library.add(faArrowLeft, faArrowRight, faArrowUp, faArrowDown, faLevelDownAlt, faSignInAlt, faTimesCircle, faTimes, faExclamationCircle, faCaretRight, faCaretUp, faCaretDown, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory, faChartLine, faBars, faCog, faQuestionCircle, faWifi, faExternalLinkAlt, faTrashAlt)
 
-const app = createApp(App)
+let app
+
+const env = process.env.VUE_APP_ENV
+switch(env) {
+    case 'WEB':
+        app = createApp(Desktop)
+        break
+    case 'XAPP':
+        app = createApp(App)
+        break
+    default:
+        app = createApp(App)
+}
 
 import { createI18n } from 'vue-i18n'
 

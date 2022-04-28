@@ -79,11 +79,7 @@ export default {
 		async wsConnect(data) {
             try {
                 if(!data) data = await xapp.getTokenData()
-                client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-
-                // Todo wait on issue https://github.com/ripple/rippled/issues/3934
-                client2.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-
+                this.$store.dispatch('connectToNode')
                 this.$store.dispatch('setAccount', data.account)
                 this.error = false
             } catch(e) {
@@ -173,7 +169,7 @@ export default {
                 this.ready = true
             } else {
                 const data = await this.getTokenData()
-                await this.wsConnect(data)
+                await this.wsConnect(data)                
             }
 		} catch(e) { return }
 

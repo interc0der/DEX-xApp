@@ -35,6 +35,12 @@ quote=USD+rhub8VRN55s94qWKDv6jmDy1pUykJzF3wq
 quote=XRP
 ```
 
+## ENV setup
+VUE_APP_ENV can be either XAPP or WEB
+```
+VUE_APP_XAPP_KEY=SOME_API_KEY
+VUE_APP_ENV=XAPP
+```
 
 ## Project setup
 ```
