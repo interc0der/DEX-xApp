@@ -5,7 +5,7 @@
         <div class="row padding">
             <TradeForm />
             <hr class="vertical-devider">
-            <OrderBook style="max-width: 170px; min-width: 150px; width: 40%"/>
+            <OrderBook />
         </div>
         <hr class="spacer">
         <TradeData />
