@@ -111,7 +111,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 :root {
     --var-tradedata-width: 300px;
 }
