@@ -21,13 +21,29 @@ const getters = {
     getOrderBookReadyState: state => {
         return state.ready
     },
-    getIndicatorProgress: state => (value, side) => {
-        if(side !== 'ask' && side !== 'bid') throw new Error('Specify the side of the book, either ask or bid')
+    getIndicatorProgress: state => (value) => {
         if(isNaN(value)) throw new Error('Needs a value')
-        const arr = state[`${side}s`]
 
-        const tot = arr[arr.length - 1].total
-        const avg = tot / arr.length
+        const asks = state.asks
+        const bids = state.bids
+
+        let totA
+        let avgA
+
+        if(asks.length >= 1) {
+            totA = asks[asks.length - 1].total
+            avgA = totA / asks.length
+        }
+
+        let totB
+        let avgB
+
+        if(bids.length >= 1) {
+            totB = bids[bids.length - 1].total
+            avgB = totB / bids.length
+        }
+
+        const avg = (Number(avgA) + Number(avgB)) / 2
         
         const max100 = avg / 50 * 100
 
