@@ -1,5 +1,5 @@
 <template>
-    <div id="browser-view">
+    <div id="browser-view" class="view-container">
         <div name="header">
             <Header />
         </div>

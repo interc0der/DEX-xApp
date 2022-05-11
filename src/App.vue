@@ -1,5 +1,5 @@
 <template>
-    <div id="view">
+    <div id="view" class="view-container">
         <div v-if="!ready" style="display: flex; width: 100%; height: 100%;">
             <Spinner style="margin: auto"/>
         </div>
@@ -219,7 +219,7 @@ export default {
     height: 100%;
     overflow-y: auto;
 }
-#view {
+.view-container {
     height: 100%;
     overflow: hidden;
     color: var(--var-txt-color);
