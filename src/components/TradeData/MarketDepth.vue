@@ -18,12 +18,17 @@
                         <template v-if="bidsList[index - 1]">
                             <span class="number">{{ quantityFormat(bidsList[index - 1].quantity, currencyPair.base.currency) }}</span>
                             <span class="number buy">{{ bidsList[index - 1].price }}</span>
+
+                             
+                            <div class="volume-bar-indicator green" :style="{ width: $store.getters.getIndicatorProgress(bidsList[index - 1].quantity) }"></div>
                         </template>
                     </div>
                     <div class="order-book-column row-asks">
                         <template v-if="asksList[index - 1]">
                             <span class="number sell">{{ asksList[index - 1].price }}</span>
                             <span class="number">{{ quantityFormat(asksList[index - 1].quantity, currencyPair.base.currency) }}</span>
+
+                            <div class="volume-bar-indicator red" :style="{ width: $store.getters.getIndicatorProgress(asksList[index - 1].quantity) }"></div>
                         </template>
                     </div>
                 </div>
@@ -236,6 +241,26 @@ export default {
 </script>
 
 <style scoped>
+.volume-bar-indicator {
+    position: absolute;
+
+    width: 0;
+    top: 0;
+
+    height: 100%;
+    transition: width 1s;
+}
+.volume-bar-indicator.red {
+    background-color: var(--red);
+    opacity: 0.2;
+    left: 0;
+}
+.volume-bar-indicator.green {
+    background-color: var(--green);
+    opacity: 0.2;
+    right: 0;
+}
+
 .table-wrapper {
     width: 100%;
 }
@@ -245,14 +270,14 @@ export default {
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    padding: 0 20px;
+    padding: 0 10px;
     margin-bottom: 50px;
 }
 .order-book-table-row {
     display: flex;
     flex-direction: row;
     width: 100%;
-    margin: 10px 0; 
+    margin: 1px 0;
     font-size: 0.8rem;
 }
 .table-headers {
@@ -265,6 +290,9 @@ export default {
     flex-direction: row;
     justify-content: space-between;
     width: 50%;
+
+    position: relative;
+    padding: 4px 0;
 }
 .row-bids {
     padding-right: 3px;
