@@ -1,5 +1,5 @@
 <template>
-    <div class="overlay">
+    <div @click.self="$emit('close')" class="overlay">
         <div id="popup-window">
             <div class="popup-container">
                 <slot></slot>
@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    
+    emits: ['close']
 }
 </script>
 
