@@ -1,5 +1,51 @@
 import axios from 'redaxios'
 
+const intervalConvert = (value, provider) => {
+    if(provider === 'OnTheDex') {
+        switch(value) {
+            case '5m':
+                return '5'
+            case '15m':
+                return '15'
+            case '1h':
+                return '60'
+            case '2h':
+                return '240'
+            case 'D':
+                return 'D'
+            case 'W':
+                return 'W'
+            default:
+                throw new Error('Not supported chart interval')
+        }
+    } else if(provider === 'ripple') {
+        switch(value) {
+            case '1m':
+                return '1minute'
+            case '5m':
+                return '5minute'
+            case '15m':
+                return '15minute'
+            case '30m':
+                return '30minute'
+            case '1h':
+                return '1hour'
+            case '2h':
+                return '2hour'
+            case '4h':
+                return '4hour'
+            case 'D':
+                return '1day'
+            case 'W':
+                return '7day'
+            case 'M':
+                return '1month' 
+            default:
+                throw new Error('Not supported chart interval')
+        }
+    }
+}
+
 const state = {
     isSafe: true,
     marketPrice: 0,
@@ -18,8 +64,12 @@ const state = {
     },
     tradeHistory: [],
     chartData: [],
-    selectedChartInterval: '4h',
-    tickerData: []
+    marker: null,
+    activeCandle: null,
+    selectedChartInterval: 'D',
+    tickerData: [],
+    activeMarketTokenList: {},
+    dataProvider: 'ripple' // 'OnTheDex' / 'ripple'
 }
 
 const getters = {
@@ -49,6 +99,15 @@ const getters = {
     },
     getSelectedChartInterval: state => {
         return state.selectedChartInterval
+    },
+    getDataProvider: state => {
+        return state.dataProvider
+    },
+    getActiveCandleData: state => {
+        return state.activeCandle
+    },
+    getChartDataMarker: state => {
+        return state.marker
     }
 }
 
@@ -119,52 +178,59 @@ const actions = {
         }
     },
     getChartData: async (context, payload) => {
+        const marker = context.getters.getChartDataMarker
+
         const currencyPair = context.getters.getCurrencyPair
-        // ["1m","3m","5m","15m","30m","1h","3h","6h","12h","1d","3d","1w"]
-        // unix timestamp
-        // https://api.sologenic.org/api/v1/ohlc?symbol=USD%2BrD9W7ULveavz8qBGM1R5jMgK2QKsEDPQVi%2FXRP&period=1m&from=1611007200&to=1611070980
+        const provider = context.getters.getDataProvider
+        const interval = intervalConvert(context.getters.getSelectedChartInterval, provider)
 
-        const intervalConvert = value => {
-            switch(value) {
-                case '1m':
-                    return '1minute'
-                case '5m':
-                    return '5minute'
-                case '15m':
-                    return '15minute'
-                case '30m':
-                    return '30minute'
-                case '1h':
-                    return '1hour'
-                case '2h':
-                    return '2hour'
-                case '4h':
-                    return '4hour'
-                case 'D':
-                    return '1day'
-                case 'W':
-                    return '7day'
-                case 'M':
-                    return '1month' 
-                default:
-                    throw new Error('Not supported chart interval')
-            }
+        let call
+        if(provider === 'OnTheDex') {
+            // https://github.com/OnTheDEX/xrpledger-token-data-api
+
+            const endpoint = 'https://api.onthedex.live/public/v1/ohlc'
+            const options = `interval=${interval}&bars=300`
+            const base = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}.${currencyPair.base.issuer}`
+            const quote = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}.${currencyPair.quote.issuer}`
+            call = `${endpoint}?base=${base}&quote=${quote}&${options}`
+
+        } else if(provider === 'ripple') {
+            const endpoint = 'https://data.ripple.com/v2/exchanges/'
+            const options = `?descending=true&result=tesSUCCESS&limit=1000&interval=${interval}`
+            const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
+            const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+            call = `${endpoint}${currency1}/${currency2}${options}`
+
+            if(payload?.marker && marker) call = call + `&marker=${marker}`
+        } else {
+            throw new Error('Not a valid data provider')
         }
-
-        const interval = intervalConvert(context.getters.getSelectedChartInterval)
-
-        const endpoint = 'https://data.ripple.com/v2/exchanges/'
-        const options = `?descending=true&result=tesSUCCESS&limit=1000&interval=${interval}`
-        const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
-        const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
-        const call = `${endpoint}${currency1}/${currency2}${options}`
 
         try {
             const res = await axios.get(call)
-            return context.commit('setChartData', res.data.exchanges)
+            return context.commit('setChartData', res.data)
         } catch(e) {
             console.error(e)
         }
+    },
+    getActiveMarketTokenList: async (context, payload) => {
+        const provider = context.getters.getDataProvider
+
+        let call
+        if(provider === 'OnTheDex') {
+            const endpoint = 'https://api.onthedex.live/public/v1/daily/pairs?token=XRP'
+            call = endpoint
+        } else {
+            throw new Error('Not a valid data provider')
+        }
+
+        try {
+            const res = await axios.get(call)
+            return context.commit('setTokenList', res.data)
+        } catch(e) {
+            console.error(e)
+        }
+
     },
     getTradeHistory: async (context, payload) => {
         const currencyPair = context.getters.getCurrencyPair
@@ -227,15 +293,26 @@ const actions = {
             return context.commit('setMarketPriceError', e)
         }
     },
-    updateLastTradedPrice: (context, price) => {
+    updateLastTradedPrice: (context, payload) => {
+        const price = payload.rate
+        const time = payload.time
+        const volume_base = payload.volume_base
+        const volume_quote = payload.volume_quote
+
         if(isNaN(Number(price))) {
             context.commit('toggleSafeMarket', false)
             context.commit('setMarketPriceError', e)
             return console.log('Price is not a Number')
         }
-        
+
         console.log(`Price Update: ${price}`)
         context.commit('updateMarketPrice', price)
+
+        if(isNaN(time)) throw new Error('Timestamp should be a number, UNIX timestamp')
+        if(isNaN(Number(volume_base))) throw new Error('base volume is not a number')
+        if(isNaN(Number(volume_quote))) throw new Error('base volume is not a number')
+
+        context.commit('updateCandleStickData', payload)
     }
 }
 
@@ -287,10 +364,104 @@ const mutations = {
         state.tradeHistory = array
     },
     setChartData: (state, data) => {
-        state.chartData = data
+        console.log('set chart data:', data)
+        switch(state.dataProvider) {
+            case 'OnTheDex':
+                const arr1 = data.data.ohlc.map(bar => {
+                    return {
+                        time: bar.t * 1000,
+                        open: bar.o,
+                        high: bar.h,
+                        low: bar.l,
+                        close: bar.c,
+                        volume: bar.vb
+                    }
+                })
+                state.chartData = arr1
+                break
+            case 'ripple':
+                const arr2 = data.exchanges.map(bar => {
+                    return {
+                        time: Date.parse(bar.start),
+                        open: Number(bar.open),
+                        high: Number(bar.high),
+                        low: Number(bar.low),
+                        close: Number(bar.close),
+                        volume: Number(bar.base_volume)
+                    }
+                }).reverse()
+                state.chartData = arr2
+
+                if(data.hasOwnProperty('marker') && data?.marker) state.marker = data.marker
+
+                break
+        }
+        const index = state.chartData.length - 1
+        const lastcandle = state.chartData[index]
+        const start = lastcandle.time
+        const timeBetweenInMs = lastcandle.time - state.chartData[index - 1].time
+        const end = start + timeBetweenInMs
+
+        state.activeCandle = {
+            end: end,
+            ...lastcandle,
+            index: index
+        }
     },
     setChartInterval: (state, interval) => {
         state.selectedChartInterval = interval
+    },
+    updateCandleStickData: (state, payload) => {
+        const price = payload.rate
+        const time = payload.time
+        const volume_base = payload.volume_base
+        const volume_quote = payload.volume_quote
+
+        // todo :: check time if new or should push to chart data array
+        // or adjust high, low, close. and add volume
+        if(time > state.activeCandle.end) {
+            console.warn('close the candle and set new active candle!!!')
+
+            state.chartData[state.activeCandle.index] = {
+                ...state.chartData[state.activeCandle.index],
+                high: state.activeCandle.high,
+                low: state.activeCandle.low,
+                close: state.activeCandle.close,
+                volume: state.activeCandle.volume
+            }
+
+            const index = state.chartData.length - 1
+            const lastcandle = state.chartData[index]
+            const start = lastcandle.time
+            const timeBetweenInMs = lastcandle.time - state.chartData[index - 1].time
+
+            const end = start + timeBetweenInMs
+            state.activeCandle = {
+                time: state.activeCandle.end,
+                end: end,
+                open: price,
+                high: price,
+                low: price,
+                close: price,
+                volume: Number(volume_base),
+                index: index + 1
+            }
+        } else {
+            state.activeCandle = {
+                ...state.activeCandle,
+                open: state.activeCandle.open,
+                high: price > state.activeCandle.high ? price : state.activeCandle.high,
+                low: price < state.activeCandle.low ? price : state.activeCandle.low,
+                close: price,
+                volume: Number(state.activeCandle.volume) + Number(volume_base)
+            }
+        }
+    },
+    setTokenList: (state, payload) => {
+        let list = state.activeMarketTokenList
+
+
+        console.log(payload)
     }
 }
 
