@@ -9,7 +9,7 @@
         </div>
 
         <div name="markets">
-            TODO CURRENCIES WITH ACTIVE MARKETS COMPONENT
+            <MarketList />
         </div>
 
         <div name="chart">
@@ -58,6 +58,8 @@
 import Header from '../components/Header.vue'
 import Ticker from '../components/TickerData.vue'
 
+import MarketList from '../components/MarketList.vue'
+
 import ChartContainer from '../components/ChartContainer.vue'
 
 import TradeForm from '../components/TradeForm.vue'
@@ -73,6 +75,7 @@ export default {
     components: {
         Header,
         Ticker,
+        MarketList,
         ChartContainer,
         TradeForm,
         OrderBook,
@@ -162,7 +165,7 @@ export default {
                 "tickerdata tickerdata tickerdata"
                 "chart chart orderform"
                 "orderbook trades orderform"
-                "accountinfo accountinfo orderform"
+                "accountinfo accountinfo accountinfo"
                 "footer footer footer";
             margin: 0;
             gap: 3px;
@@ -310,6 +313,8 @@ div[name="markets"] {
     width: 100%;
     display: none;
     grid-area: markets;
+
+    overflow: hidden;
 }
 
 div[name="chart"] {
