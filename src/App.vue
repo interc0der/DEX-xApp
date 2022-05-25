@@ -79,7 +79,7 @@ export default {
 		async wsConnect(data) {
             try {
                 if(!data) data = await xapp.getTokenData()
-                this.$store.dispatch('connectToNode')
+                await this.$store.dispatch('setNodeType', { type: data.nodetype || 'MAINNET', url: data.nodewss || 'wss://xrplcluster.com/'})
                 this.$store.dispatch('setAccount', data.account)
                 this.error = false
             } catch(e) {
@@ -138,35 +138,27 @@ export default {
 			if(!bool) return
 			this.init = true
 		},
-        getWebSocketUrl(nodetype) {
-            switch (nodetype) {
-                case "MAINNET":
-                    return 'wss://xrplcluster.com'
-                case "TESTNET":
-                    return 'wss://s.altnet.rippletest.net:51233'
-                    return 'wss://testnet.xrpl-labs.com'
-            }
-            return 'wss://xrplcluster.com'
+        test() {
+            // todo delete me
+            console.warn('THIS IS DEVMODE')
+            const account = 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm'
+            // account: 'rpDpacp6FX4qXdaXHp8Tvt88CFewdCNEVw'
+            // account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC'
+            // account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk'
+            // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg'
+           
+            const type = 'MAINNET'
+            const wss = 'wss://xrplcluster.com' // 'wss://s.altnet.rippletest.net:51233' // 'wss://testnet.xrpl-labs.com'
+
+            this.$store.dispatch('setNodeType', { type: type, url: wss})
+            this.$store.dispatch('setAccount', account)
+            this.ready = true
         }
 	},
 	async mounted() {
 		try {
 			if (typeof window.ReactNativeWebView === 'undefined') {
-                console.warn('THIS IS DEVMODE')
-                const data = {
-                    // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg',
-                    // account: 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm',
-                    // nodetype: 'MAINNET',
-                    // account: 'rpDpacp6FX4qXdaXHp8Tvt88CFewdCNEVw',
-                    // account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC',
-                    account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
-                    nodetype: 'TESTNET'
-                }
-                client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-                // todo delete if issue is resolved
-                client2.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-				this.$store.dispatch('setAccount', data.account)
-                this.ready = true
+                this.test()
             } else {
                 const data = await this.getTokenData()
                 await this.wsConnect(data)                
@@ -180,26 +172,6 @@ export default {
         }
 
         this.ready = true
-
-        try {
-            client.send({
-                command: 'subscribe',
-                accounts: [this.$store.getters.getAccount]
-            })
-        } catch(e) {
-            this.error = this.$t('xapp.error.subscribe_to_account')
-            alert(this.error)
-        }
-
-		client.on('transaction', tx => {
-            // Next line is used to parse account subscribe txn
-			this.$store.dispatch('parseTx', { transaction: tx, notify: true })
-            
-		})
-
-        client2.on('transaction', tx => {
-            this.$store.dispatch('parseOrderBookChanges', { tx, emitter: this.$emitter })
-        })
 	},
     beforeUnmount() {
         this.$emitter.all.clear()

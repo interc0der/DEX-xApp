@@ -96,8 +96,10 @@ const actions = {
         const tx = payload.tx
 
         // console.log(tx)
+        // const parsed = parseOrderbookChanges(tx.meta)
+        // console.log(parsed)
 
-        // console.log(parseBalanceChanges(tx.meta))
+        context.dispatch('getCurrentOrderBook')
 
         const tradingPair = context.rootGetters.getCurrencyPair
 
@@ -224,9 +226,24 @@ const actions = {
         })
 
         for(let updateItem of tradeUpdates) {
-            context.dispatch('updateLastTradedPrice', updateItem.rate)
+            // console.log('raw tx:', tx)
+            // console.log('updateItem:', updateItem)
+            context.dispatch('updateLastTradedPrice', { rate: updateItem.rate, time: Date.parse(updateItem.executed_time) , volume_base: updateItem.base_amount, volume_quote: updateItem.counter_amount })
             context.dispatch('pushTxToTradeHistory', updateItem)
-            payload.emitter.emit('tradeDataUpdate', updateItem)
+
+            // {
+            //     "base_amount": 97.98,
+            //     "base_currency": "XRP",
+            //     "base_issuer": null,
+            //     "counter_amount": 43.425756,
+            //     "counter_currency": "USD",
+            //     "counter_issuer": "",
+            //     "rate": 0.4432104102878138,
+            //     "executed_date": 705764260,
+            //     "executed_time": "2022-05-13T13:37:40.000Z",
+            //     "direction": "undefined"
+            // }
+            
             // if (updateItem.base_currency === 'XRP' || updateItem.counter_currency === 'XRP') {
                 // if( (baseObject.grossValue <= 0 || baseObject.value <= 0) && (quoteObject.grossValue <= 0 || quoteObject.value <= 0) ) {
                 //     console.log('Do not update market price: both values negative')

@@ -99,6 +99,7 @@ const getters = {
 
 const actions = {
     resetData: (context) => {
+        xrpl.send({ command: 'unsubscribe', accounts: [context.state.address] })
         context.dispatch('resetOfferState')
         context.dispatch('setOpenOffers', [])
         context.commit('setAccountObjects', [])
@@ -108,7 +109,9 @@ const actions = {
     setAccount: async (context, account) => {
         if(account !== context.state.address) context.dispatch('resetData')
         context.commit('setAccount', account)
-        try {
+        try {   
+            xrpl.send({ command: 'subscribe', accounts: [account] })
+
             await context.dispatch('setAccountInfo')
             await Promise.all([context.dispatch('setAccountObjects'), context.dispatch('setAccountTransactions')])
             context.dispatch('checkOpenOffers')

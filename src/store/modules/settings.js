@@ -9,13 +9,15 @@ const state = {
     node: {
         type: 'MAINNET',
         url: 'wss://xrplcluster.com/'
+        // type: 'TESTNET',
+        // url: 'wss://s.altnet.rippletest.net:51233'
     },
     locale: 'en_EN',
     currency: 'USD',
 
     nodes: {
         MAINNET: ['wss://xrplcluster.com/', 'wss://s1.ripple.com/', 'wss://s2.ripple.com/', 'wss://x1.sologenic.org'],
-        TESTNET: ['wss://s.altnet.rippletest.net/', 'wss://testnet.xrpl-labs.com']
+        TESTNET: ['wss://s.altnet.rippletest.net:51233', 'wss://testnet.xrpl-labs.com']
     }
 }
 
@@ -39,10 +41,11 @@ const getters = {
 }
 
 const actions = {
-    setNodeType: (context, payload) => {
+    setNodeType: async (context, payload) => {
+        // { type, url }
         // todo connect to new websocket and save settings
         context.commit('setNodeType', payload)
-        context.dispatch('connectToNode')
+        await context.dispatch('connectToNode')
     },
     connectToNode: async (context, settings) => {
         settings = { NoUserAgent: true, MaxConnectTryCount: 5 }
@@ -61,6 +64,14 @@ const actions = {
         context.dispatch('initDataNode')
     },
     initDataNode: (context) => {
+        client.on('transaction', tx => {
+			context.dispatch('parseTx', { transaction: tx, notify: true })
+            
+		})
+        client2.on('transaction', tx => {
+            context.dispatch('parseOrderBookChanges', { tx })
+        })
+
         console.log('get new data')
         context.dispatch('getTradeHistory')
         context.dispatch('setLastTradedPrice')
