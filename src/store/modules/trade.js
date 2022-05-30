@@ -1,4 +1,6 @@
 import axios from 'redaxios'
+import router from '../../router'
+import _isEqual from 'lodash/isEqual'
 
 const intervalConvert = (value, provider) => {
     if(provider === 'OnTheDex') {
@@ -319,17 +321,34 @@ const actions = {
 const mutations = {
     setCurrencyPair: (state, obj) => {
         // todo check if base and quote are the same if true throw error
+
+        const test = {
+            base: state.currencyPair.base.currency === 'XRP' ? 'XRP' : { ...state.currencyPair.base },
+            quote: state.currencyPair.quote.currency === 'XRP' ? 'XRP' : { ...state.currencyPair.quote }
+        }
+        if(_isEqual(obj, test)) {
+            console.log('currency pair isEqual:', true)
+            return new Error('No change in currency pair')
+        }
+
         if(obj.switch === true) {
-            return state.currencyPair = { base: state.currencyPair.quote, quote: state.currencyPair.base }
+            state.currencyPair = { base: state.currencyPair.quote, quote: state.currencyPair.base }
+        } else {
+            if(obj.target === 'base' || obj.hasOwnProperty('base')) {
+                if(obj?.amount?.currency === 'XRP' || obj?.base?.currency === 'XRP' || obj.base === 'XRP') state.currencyPair.base = { currency: 'XRP', issuer: null }
+                else state.currencyPair.base = obj.hasOwnProperty('base') ? obj.base : obj.amount
+            }
+            if(obj.target === 'quote' || obj.hasOwnProperty('quote')) {
+                if(obj?.amount?.currency === 'XRP' || obj?.quote?.currency === 'XRP' || obj.quote === 'XRP') state.currencyPair.quote = { currency: 'XRP', issuer: null }
+                else state.currencyPair.quote = obj.hasOwnProperty('quote') ? obj.quote : obj.amount
+            }
         }
-        if(obj.target === 'base' || obj.hasOwnProperty('base')) {
-            if(obj?.amount?.currency === 'XRP' || obj?.base?.currency === 'XRP' || obj.base === 'XRP') state.currencyPair.base = { currency: 'XRP', issuer: null }
-            else state.currencyPair.base = obj.hasOwnProperty('base') ? obj.base : obj.amount
-        }
-        if(obj.target === 'quote' || obj.hasOwnProperty('quote')) {
-            if(obj?.amount?.currency === 'XRP' || obj?.quote?.currency === 'XRP' || obj.quote === 'XRP') state.currencyPair.quote = { currency: 'XRP', issuer: null }
-            else state.currencyPair.quote = obj.hasOwnProperty('quote') ? obj.quote : obj.amount
-        }
+
+        const baseString = state.currencyPair.base.currency.toUpperCase() === 'XRP' ? state.currencyPair.base.currency : `${state.currencyPair.base.currency}+${state.currencyPair.base.issuer}`
+        const quoteString = state.currencyPair.quote.currency.toUpperCase() === 'XRP' ? state.currencyPair.quote.currency : `${state.currencyPair.quote.currency}+${state.currencyPair.quote.issuer}`
+        const qstring = `/?base=${baseString}&quote=${quoteString}`
+        router.replace(qstring)
+        
     },
     setMarketPrice: (state, arr) => {
         state.marketPrice = arr[0]
