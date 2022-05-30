@@ -33,7 +33,7 @@ export default {
                 this.payload = payload
                 this.popupActive = true
             } else {
-                xapp.signPayload(txjson)
+                xapp.signPayload({ txjson })
             }
         })
     },

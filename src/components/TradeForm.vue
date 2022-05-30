@@ -369,7 +369,13 @@ export default {
                     }
                 }
                 OfferCreate['Account'] = this.$store.getters.getAccount
-                this.$emitter.emit('signModalOpen', OfferCreate)
+
+                if(process.env.VUE_APP_ENV === 'WEB') {
+                    this.$emitter.emit('signModalOpen', OfferCreate)
+                } else {
+                    await xapp.signPayload({ txjson: OfferCreate })
+                }
+                
             } catch(e) {
                 if(e.error !== false) {
                     this.$emitter.emit('modal', {
