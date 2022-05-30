@@ -52,6 +52,7 @@
         </div>
 
     </div>
+    <SignModal />
 </template>
 
 <script>
@@ -71,6 +72,8 @@ import AccountEvents from '@/components/AccountEvents.vue'
 
 import Footer from '../components/Footer.vue'
 
+import SignModal from '../components/SignMethods/Main.vue'
+
 export default {
     components: {
         Header,
@@ -84,7 +87,9 @@ export default {
         AccountData,
         AccountEvents,
 
-        Footer
+        Footer,
+
+        SignModal
     },
     data() {
         return {
@@ -93,13 +98,6 @@ export default {
         }
     },
     async created() {
-        try {
-            this.$store.dispatch('connectToNode')
-        } catch(e) {
-            console.error('WebSocket error:', e)
-            alert(e)
-        }
-
         this.$store.dispatch('getTradeHistory')
         this.$store.dispatch('setLastTradedPrice')
 
@@ -107,9 +105,6 @@ export default {
             this.$store.dispatch('getOrderBookData')
             this.$store.dispatch('getChartData')
         })
-    },
-    beforeUnmount() {
-        this.$emitter.all.clear()
     }
 }
 </script>

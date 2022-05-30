@@ -1,7 +1,8 @@
 import { createApp } from 'vue'
+import Xapp from './views/Xapp.vue'
 import App from './App.vue'
-import Desktop from './views/Desktop.vue'
 import store from './store'
+import router from './router'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faArrowLeft, faArrowRight, faArrowDown, faLevelDownAlt,faSignInAlt, faTimesCircle, faExclamationCircle, faArrowUp, faTimes, faCaretRight, faCaretUp, faCaretDown, faChevronLeft, faChevronRight, faChevronDown, faCheckCircle, faCalendar, faHistory, faChartLine, faBars, faCog, faQuestionCircle, faWifi, faExternalLinkAlt, faTrashAlt } from '@fortawesome/free-solid-svg-icons'
@@ -16,13 +17,20 @@ let app
 const env = process.env.VUE_APP_ENV
 switch(env) {
     case 'WEB':
-        app = createApp(Desktop)
+        try {
+            store.dispatch('connectToNode')
+        } catch(e) {
+            console.error('WebSocket error:', e)
+            alert(e)
+        }
+
+        app = createApp(App).use(router)
         break
     case 'XAPP':
-        app = createApp(App)
+        app = createApp(Xapp)
         break
     default:
-        app = createApp(App)
+        app = createApp(Xapp)
 }
 
 import { createI18n } from 'vue-i18n'
