@@ -334,8 +334,7 @@ export default {
 
             try {
                 const OfferCreate = {
-                    TransactionType: "OfferCreate",
-                    Account: this.$store.getters.getAccount
+                    TransactionType: "OfferCreate"
                 }
 
                 if (this.direction === 'sell') {
@@ -369,10 +368,8 @@ export default {
                             break
                     }
                 }
-
-                await xapp.signPayload({
-                    txjson: OfferCreate
-                })
+                OfferCreate['Account'] = this.$store.getters.getAccount
+                this.$emitter.emit('signModalOpen', OfferCreate)
             } catch(e) {
                 if(e.error !== false) {
                     this.$emitter.emit('modal', {

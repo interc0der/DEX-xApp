@@ -2,10 +2,12 @@ import xrpl from '../../plugins/ws-client'
 import _merge from 'lodash/merge'
 
 const state = {
+    signProvider: null,
     address: '',
     accountInfo: {},
     accountObjects: [],
-    accountTransactions: []
+    accountTransactions: [],
+    ledgerConnectionClass: null
 }
 
 const getters = {
@@ -25,6 +27,9 @@ const getters = {
     hasAccountErrors: state => {
         if(typeof state.accountInfo === 'string') return true
         else return false
+    },
+    getAccountSignProvider: state => {
+        return state.signProvider
     },
     getAccount: state => {
         return state.address
@@ -105,11 +110,21 @@ const actions = {
         context.commit('setAccountObjects', [])
         context.commit('setAccountTransactions', [])
     },
+    setAccount: async (context, payload) => {
+        let account
+        let provider
+        if(typeof payload === 'string') account = payload
+        else if(payload.hasOwnProperty('account')) {
+            account = payload.account
+            provider = payload.provider
+        } else throw new Error('No account given')
+        // todo check if valid account
 
-    setAccount: async (context, account) => {
         if(account !== context.state.address) context.dispatch('resetData')
-        context.commit('setAccount', account)
-        try {   
+        context.commit('setAccount', { account, provider })
+
+        try {
+            console.log('test', xrpl.getState())
             xrpl.send({ command: 'subscribe', accounts: [account] })
 
             await context.dispatch('setAccountInfo')
@@ -208,12 +223,13 @@ const actions = {
         console.log('Remove Object From account please...')
         object.FinalFields.index = object.LedgerIndex
         context.commit('removeObject', object.FinalFields)
-    },
+    }
 }
 
 const mutations = {
-    setAccount: (state, account) => {
-        state.address = account
+    setAccount: (state, accountObj) => {
+        state.address = accountObj.account
+        state.signProvider = accountObj.provider
     },
     setAccountInfo: (state, obj) => {
         state.accountInfo = obj

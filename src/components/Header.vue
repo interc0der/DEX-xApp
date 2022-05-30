@@ -4,7 +4,8 @@
             <img src="../assets/png/xumm.png">
         </a>
 
-        <label v-show="account">{{ `${account.slice(0, 4)}...${account.slice(-4)}` }}</label>
+        <!-- <label v-show="account">{{ `${account.slice(0, 4)}...${account.slice(-4)}` }}</label> -->
+        <label v-show="account">{{ account }}</label>
 
         <!-- <div class="navbar-items">
             <div class="navbar-item">Buy Crypto</div>
@@ -34,11 +35,14 @@
             <li @click="signIn('xumm')">
                 <SignInBtn height="40px"/>
             </li>
+            <li @click="signIn('ledger')">
+                <img height="40" src="../assets/png/ledger.png">
+            </li>
             <li @click="signIn('test')">
                 Set Hardcoded account click here
             </li>
-            <li @click="signIn('ledger')">
-                <img height="40" src="../assets/png/ledger.png">
+            <li @click="signIn('testnet')">
+                TestNet account
             </li>
         </ul>
         <!-- <component :is="comp" /> -->
@@ -53,9 +57,8 @@ import PopUp from './PopUp.vue'
 
 import SignInBtn from '../assets/svg/signinWithXumm.vue'
 
-import { listen } from "@ledgerhq/logs"
-import AppXrp from "@ledgerhq/hw-app-xrp"
-import TransportWebUSB from "@ledgerhq/hw-transport-webusb"
+import xummConnector from '../plugins/xumm-connector'
+import ledgerConnector from '../plugins/ledger-hw-wallet-connector'
 
 export default {
     components: {
@@ -77,7 +80,10 @@ export default {
         async signIn(provider) {
             switch(provider) {
                 case 'test':
-                    this.test()
+                    this.test('rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm')
+                    break
+                case 'testnet':
+                    this.test('rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk')
                     break
                 case 'xumm':
                     await this.xumm()
@@ -111,37 +117,20 @@ export default {
 
         },
         async xumm() {
-            const url = 'https://oauth2.xumm.app/auth'
-            const api = process.env.VUE_APP_XAPP_KEY_WEB
-            const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) //random string
-
-            const qstring = new URLSearchParams({
-                client_id: api,
-                redirect_uri: 'http://192.168.1.102:8080/auth',
-                scope: 'somescope',
-                response_type: 'token',
-                response_mode: 'query',
-                state: '6a4fr0a09un',
-                nonce: nonce
-            })
-            window.open(`${url}?${qstring}`)
+            const path = this.$router.currentRoute.value.fullPath
+            console.log('path', path)
+            xummConnector.authenticate(path)
         },
         async ledger() {
             try {
-                const transport = await TransportWebUSB.create()
-                listen(log => console.log(log))
-                const appXrp = new AppXrp(transport)
-
-                const { publicKey, address } = await appXrp.getAddress("44'/144'/0'/0/0")
-                this.$store.dispatch('setAccount', address)
+                const account = await ledgerConnector.init()
+                this.$store.dispatch('setAccount', { account, provider: 'ledger' })
             } catch(e) {
                 console.log(e)
             }
         },
-        test() {
-            // const account = 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk'
-            const account = 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm'
-            this.$store.dispatch('setAccount', account)
+        test(account) {
+            this.$store.dispatch('setAccount', { account, provider: 'local' })
         }
     }
 }
