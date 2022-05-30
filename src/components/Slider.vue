@@ -9,7 +9,7 @@
                 @pointerup="cancelDrag('touch')"
                 @pointerover="mouseHover"
                 @pointerout="hideValueLabel()"
-            ></div>           
+            ></div>
             <div class="slider-range"></div>
             <div class="slider-steps">
                 <template v-for="(step, index) in 5">
@@ -60,6 +60,7 @@ export default {
             if(this.isDragging) this.posTouch(e)
         },
         cancelDrag(method) {
+            console.log('cancel by: ' + method)
             this.isDragging = false
             if(method === 'touch') this.hideValueLabel()
         },
@@ -114,7 +115,7 @@ export default {
                 const value = this.modelValue
                 if(value < 0) return 0
                 else if(value > 100) return 100
-                else return value
+                else return parseInt(value)
             },
             set(value) {
                 this.$emit('update:modelValue', value)
