@@ -124,7 +124,6 @@ const actions = {
         context.commit('setAccount', { account, provider })
 
         try {
-            console.log('test', xrpl.getState())
             xrpl.send({ command: 'subscribe', accounts: [account] })
 
             await context.dispatch('setAccountInfo')
