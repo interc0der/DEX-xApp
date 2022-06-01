@@ -108,6 +108,9 @@ const getters = {
     getActiveCandleData: state => {
         return state.activeCandle
     },
+    getActiveMarketTokenList: state => {
+        return state.activeMarketTokenList
+    },
     getChartDataMarker: state => {
         return state.marker
     }
@@ -134,49 +137,59 @@ const actions = {
     getTickerData: async (context, payload) => {
         const marker = payload?.marker
         const firstData = payload?.data
+        const provider = context.getters.getDataProvider
 
-        let now = new Date()
-        now.setUTCHours(now.getUTCHours() - 24)
-        const yesterday = now.toJSON()
-
-        const currencyPair = context.getters.getCurrencyPair
-        const endpoint = 'https://data.ripple.com/v2/exchanges/'
-        let options = `?start=${yesterday}&reduce=true`
-        // let options = `?start=${yesterday}&interval=1hour&limit=24`
-        if(marker) options = options + `&marker=${marker}`
-        const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
-        const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
-        const call = `${endpoint}${currency1}/${currency2}${options}`
-
-        try {
-            const res = await axios.get(call)
-
-            if(res.data.marker && !marker) {
-                return context.dispatch('getTickerData', {
-                    marker: res.data.marker,
-                    data: res.data.exchanges[0]
-                })
-            } else if(res.data.marker && marker) {
-                const newData = res.data.exchanges[0]
-                const lastData = {
-                    high: firstData.high < newData.high ? newData.high : firstData.high,
-                    low: firstData.low > newData.low ? newData.low : firstData.low,
-                    close: newData.close,
-                    base_volume: Number(firstData.base_volume) + Number(newData.base_volume),
-                    counter_volume: Number(firstData.counter_volume) + Number(newData.counter_volume),
-                    buy_volume: Number(firstData.buy_volume) + Number(newData.buy_volume),
-                    count: Number(firstData.count) + Number(newData.count)
+        switch(provider) {
+            case 'OnThedex':
+                console.warn('todo onthedex 24h data on tradingpair')
+                break
+            case 'ripple':
+                let now = new Date()
+                now.setUTCHours(now.getUTCHours() - 24)
+                const yesterday = now.toJSON()
+        
+                const currencyPair = context.getters.getCurrencyPair
+                const endpoint = 'https://data.ripple.com/v2/exchanges/'
+                let options = `?start=${yesterday}&reduce=true`
+                // let options = `?start=${yesterday}&interval=1hour&limit=24`
+                if(marker) options = options + `&marker=${marker}`
+                const currency1 = currencyPair.base.currency === 'XRP' ? 'XRP' : `${currencyPair.base.currency}+${currencyPair.base.issuer}`
+                const currency2 = currencyPair.quote.currency === 'XRP' ? 'XRP' : `${currencyPair.quote.currency}+${currencyPair.quote.issuer}`
+                const call = `${endpoint}${currency1}/${currency2}${options}`
+        
+                try {
+                    const res = await axios.get(call)
+        
+                    if(res.data.marker && !marker) {
+                        return context.dispatch('getTickerData', {
+                            marker: res.data.marker,
+                            data: res.data.exchanges[0]
+                        })
+                    } else if(res.data.marker && marker) {
+                        const newData = res.data.exchanges[0]
+                        const lastData = {
+                            high: firstData.high < newData.high ? newData.high : firstData.high,
+                            low: firstData.low > newData.low ? newData.low : firstData.low,
+                            close: newData.close,
+                            base_volume: Number(firstData.base_volume) + Number(newData.base_volume),
+                            counter_volume: Number(firstData.counter_volume) + Number(newData.counter_volume),
+                            buy_volume: Number(firstData.buy_volume) + Number(newData.buy_volume),
+                            count: Number(firstData.count) + Number(newData.count)
+                        }
+                        
+                        return context.dispatch('getTickerData', {
+                            marker: res.data.marker,
+                            data: Object.assign(firstData, lastData)
+                        })
+                    } else {
+                        return context.commit('setTickerDataMarket', firstData || res.data.exchanges)
+                    }
+                } catch(e) {
+                    console.error(e)
                 }
-                
-                return context.dispatch('getTickerData', {
-                    marker: res.data.marker,
-                    data: Object.assign(firstData, lastData)
-                })
-            } else {
-                return context.commit('setTickerDataMarket', firstData || res.data.exchanges)
-            }
-        } catch(e) {
-            console.error(e)
+                break
+            default:
+                throw new Error('Not a valid data provider')
         }
     },
     getChartData: async (context, payload) => {
@@ -476,9 +489,26 @@ const mutations = {
             }
         }
     },
-    setTokenList: (state, payload) => {
-        let list = state.activeMarketTokenList
+    setTokenList: (state, payload) => {   
+           
+        payload.pairs.forEach(item => {
+            if(!state.activeMarketTokenList.hasOwnProperty(item.quote)) state.activeMarketTokenList[item.quote] = []
+            if(!state.activeMarketTokenList[item.quote].length) state.activeMarketTokenList[item.quote] = []
 
+            state.activeMarketTokenList[item.quote].push({
+                    issuer: item.base.issuer,
+                    currency: item.base.currency,
+                    trades: item.num_trades,
+                    high: item.price_hi,
+                    low: item.price_lo,
+                    market: item.price_mid, // todo what is this price?
+                    high_usd: item.price_hi_usd,
+                    low_usd: item.price_lo_usd,
+                    volume_base: item.volume_base,
+                    volume_quote: item.volume_quote,
+                    volume_usd: item.volume_usd                    
+                })
+        })
 
         console.log(payload)
     }
