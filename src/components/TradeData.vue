@@ -217,17 +217,14 @@ export default {
 </script>
 
 <style scoped>
-.test {
-    display: flex;
-    overflow: hidden;
-}
-
 .number {
     font-size: 0.8rem;
 }
 #offers {
     height: inherit;
     overflow: hidden;
+
+    flex: 1 1 0;
 }
 .tab-head {
     display: flex;

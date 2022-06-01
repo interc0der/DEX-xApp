@@ -98,17 +98,14 @@ const round = (value, decimals) => {
     value = Number(value)
     if(value < 1 && value > 0) {
         const log = Math.log10(value)
-        const cor = Math.pow(10,log)
-        const exponent = Math.ceil(log + cor)
+        const exponent = Math.ceil(log)
 
-        return value.toFixed( Math.abs(exponent - 4) )
-        // return value.toPrecision(decimals)
-    } else if (value > 0) {
+        return value.toFixed( Math.abs(exponent - decimals) )
+    } else if (value >= 1) {
         const integerLength = (value.toFixed(0)).length
         return value.toPrecision(decimals + integerLength)
-    } else if(value === 0) return '0'
-    else 'NaN'
-    // return Number(Math.round(value+'e'+decimals)+'e-'+decimals)
+    } else if(value === 0) return '0.0000'
+    else NaN
 }
 
 const maxDecimals = (float) => {
@@ -125,7 +122,8 @@ const maxDecimals = (float) => {
     }
 }
 
-const priceFormat = (value) => {
+const priceFormat = (value, offset) => {
+
     const precision = maxDecimals(value)
     const rounded = round(value, precision)
     return rounded

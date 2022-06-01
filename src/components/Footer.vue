@@ -10,7 +10,7 @@
         </div>
 
     </footer>
-    <PopUp v-if="popupActive">
+    <PopUp v-if="popupActive" @close="popupActive = false">
         <component :is="comp" />
     </PopUp>
 </template>

@@ -8,6 +8,7 @@
         </div>
         <div class="account-selector">
             <label class="number">
+                <label v-if="activeNode.type !== 'MAINNET'" style="color: orange">{{ activeNode.type }}</label>
                 <span class="dot" :style="{ 'background-color': online ? 'green' : 'red' }"></span>
                 {{ `${account.slice(0, 4)}...${account.slice(-4)}` }}
             </label>
@@ -42,6 +43,9 @@ export default {
         },
         account() {
             return this.$store.getters.getAccount
+        },
+        activeNode() {
+            return this.$store.getters.getActiveNode
         }
     },
     methods: {

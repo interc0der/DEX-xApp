@@ -1,6 +1,5 @@
 import { createApp } from 'vue'
-import App from './App.vue'
-import Desktop from './views/Desktop.vue'
+import Xapp from './views/Xapp.vue'
 import store from './store'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
@@ -13,17 +12,7 @@ library.add(faArrowLeft, faArrowRight, faArrowUp, faArrowDown, faLevelDownAlt, f
 
 let app
 
-const env = process.env.VUE_APP_ENV
-switch(env) {
-    case 'WEB':
-        app = createApp(Desktop)
-        break
-    case 'XAPP':
-        app = createApp(App)
-        break
-    default:
-        app = createApp(App)
-}
+app = createApp(Xapp)
 
 import { createI18n } from 'vue-i18n'
 

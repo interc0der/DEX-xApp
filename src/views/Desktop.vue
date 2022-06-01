@@ -1,5 +1,5 @@
 <template>
-    <div id="browser-view">
+    <div id="browser-view" class="view-container">
         <div name="header">
             <Header />
         </div>
@@ -9,7 +9,7 @@
         </div>
 
         <div name="markets">
-            TODO CURRENCIES WITH ACTIVE MARKETS COMPONENT
+            <MarketList />
         </div>
 
         <div name="chart">
@@ -52,11 +52,14 @@
         </div>
 
     </div>
+    <SignModal />
 </template>
 
 <script>
 import Header from '../components/Header.vue'
 import Ticker from '../components/TickerData.vue'
+
+import MarketList from '../components/MarketList.vue'
 
 import ChartContainer from '../components/ChartContainer.vue'
 
@@ -69,10 +72,13 @@ import AccountEvents from '@/components/AccountEvents.vue'
 
 import Footer from '../components/Footer.vue'
 
+import SignModal from '../components/SignMethods/Main.vue'
+
 export default {
     components: {
         Header,
         Ticker,
+        MarketList,
         ChartContainer,
         TradeForm,
         OrderBook,
@@ -81,7 +87,9 @@ export default {
         AccountData,
         AccountEvents,
 
-        Footer
+        Footer,
+
+        SignModal
     },
     data() {
         return {
@@ -90,13 +98,6 @@ export default {
         }
     },
     async created() {
-        try {
-            this.$store.dispatch('connectToNode')
-        } catch(e) {
-            console.error('WebSocket error:', e)
-            alert(e)
-        }
-
         this.$store.dispatch('getTradeHistory')
         this.$store.dispatch('setLastTradedPrice')
 
@@ -104,14 +105,11 @@ export default {
             this.$store.dispatch('getOrderBookData')
             this.$store.dispatch('getChartData')
         })
-    },
-    beforeUnmount() {
-        this.$emitter.all.clear()
     }
 }
 </script>
 
-<style>
+<style scoped>
 :root {
     --var-tradedata-width: 300px;
 }
@@ -162,7 +160,7 @@ export default {
                 "tickerdata tickerdata tickerdata"
                 "chart chart orderform"
                 "orderbook trades orderform"
-                "accountinfo accountinfo orderform"
+                "accountinfo accountinfo accountinfo"
                 "footer footer footer";
             margin: 0;
             gap: 3px;
@@ -310,6 +308,8 @@ div[name="markets"] {
     width: 100%;
     display: none;
     grid-area: markets;
+
+    overflow: hidden;
 }
 
 div[name="chart"] {

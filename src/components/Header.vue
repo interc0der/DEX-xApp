@@ -4,7 +4,8 @@
             <img src="../assets/png/xumm.png">
         </a>
 
-        <label v-show="account">{{ `${account.slice(0, 4)}...${account.slice(-4)}` }}</label>
+        <!-- <label v-show="account">{{ `${account.slice(0, 4)}...${account.slice(-4)}` }}</label> -->
+        <label v-show="account">{{ account }}</label>
 
         <!-- <div class="navbar-items">
             <div class="navbar-item">Buy Crypto</div>
@@ -14,7 +15,7 @@
         </div> -->
 
         <div class="signin-button">
-            <a @click="signIn()" class="btn btn-primary">SignIn</a>
+            <a @click="popupActive = true" class="btn btn-primary">SignIn</a>
         </div>
 
         <div class="options">
@@ -29,25 +30,70 @@
             </a>
         </div>
     </header>
+    <PopUp v-if="popupActive" @close="popupActive = false">
+        <ul>
+            <li @click="signIn('xumm')">
+                <SignInBtn height="40px"/>
+            </li>
+            <li @click="signIn('ledger')">
+                <img height="40" src="../assets/png/ledger.png">
+            </li>
+            <li @click="signIn('test')">
+                Set Hardcoded account click here
+            </li>
+            <li @click="signIn('testnet')">
+                TestNet account
+            </li>
+        </ul>
+        <!-- <component :is="comp" /> -->
+    </PopUp>
 </template>
 
 <script>
 import client from '../plugins/ws-client'
 import client2 from '../plugins/ws-client-secondary'
 
+import PopUp from './PopUp.vue'
+
+import SignInBtn from '../assets/svg/signinWithXumm.vue'
+
+import xummConnector from '../plugins/xumm-connector'
+import ledgerConnector from '../plugins/ledger-hw-wallet-connector'
+
 export default {
+    components: {
+        PopUp,
+        SignInBtn
+    },
+    data() {
+        return {
+            popupActive: false,
+            // comp: NodeSelect
+        }
+    },
     computed: {
         account() {
             return this.$store.getters.getAccount
         }
     },
     methods: {
-        async signIn() {
-            // todo signin method
+        async signIn(provider) {
+            switch(provider) {
+                case 'test':
+                    this.test('rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm')
+                    break
+                case 'testnet':
+                    this.test('rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk')
+                    break
+                case 'xumm':
+                    await this.xumm()
+                    break
+                case 'ledger':
+                    await this.ledger()
+                    break
+            }
 
-            // const account = 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk'
-            const account = 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm'
-            this.$store.dispatch('setAccount', account)
+            return
 
             try {
                 client.send({
@@ -69,6 +115,22 @@ export default {
                 this.$store.dispatch('parseOrderBookChanges', { tx, emitter: this.$emitter })
             })
 
+        },
+        async xumm() {
+            const path = this.$router.currentRoute.value.fullPath
+            console.log('path', path)
+            xummConnector.authenticate(path)
+        },
+        async ledger() {
+            try {
+                const account = await ledgerConnector.init()
+                this.$store.dispatch('setAccount', { account, provider: 'ledger' })
+            } catch(e) {
+                console.log(e)
+            }
+        },
+        test(account) {
+            this.$store.dispatch('setAccount', { account, provider: 'local' })
         }
     }
 }
@@ -119,5 +181,15 @@ header {
 }
 .options > a > svg {
     margin: auto;
+}
+
+/* signin modal */
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+li {
+    cursor: pointer;
 }
 </style>

@@ -229,6 +229,7 @@ export default {
 
     /* background-color: rgba(255, 0, 0, 0.2); */
     height: 100%;
+    transition: width 1s;
 
 }
 .volume-bar-wrapper {

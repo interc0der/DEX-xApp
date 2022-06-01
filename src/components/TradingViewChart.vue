@@ -80,20 +80,19 @@ export default {
                     return
                 }
 
-                const bars = this.chartData.map(bar => {
-                    return {
-                        time: Date.parse(bar.start),
-                        open: Number(bar.open),
-                        high: Number(bar.high),
-                        low: Number(bar.low),
-                        close: Number(bar.close),
-                        volume: Number(bar.base_volume)
-                    }
-                })
+                const bars = this.chartData
+                // .map(bar => {
+                //     return {
+                //         time: Date.parse(bar.start),
+                //         open: Number(bar.open),
+                //         high: Number(bar.high),
+                //         low: Number(bar.low),
+                //         close: Number(bar.close),
+                //         volume: Number(bar.base_volume)
+                //     }
+                // })
 
-                console.log(bars)
-
-                onHistoryCallback(bars.reverse(), { noData: false }) // nextTime: bars[bars.length - 1].time
+                onHistoryCallback(bars, { noData: false }) // nextTime: bars[bars.length - 1].time
             },
 
             subscribeBars: async (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
@@ -109,7 +108,7 @@ export default {
                 toolbar_bg: bg,
                 autosize: true,
                 symbol: 'XRP',
-                interval: '240',
+                interval: 'D',
                 container: "trading-view-container",
 
                 //	BEWARE: no trailing slash is expected in feed URL

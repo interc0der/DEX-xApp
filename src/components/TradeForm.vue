@@ -334,8 +334,7 @@ export default {
 
             try {
                 const OfferCreate = {
-                    TransactionType: "OfferCreate",
-                    Account: this.$store.getters.getAccount
+                    TransactionType: "OfferCreate"
                 }
 
                 if (this.direction === 'sell') {
@@ -369,10 +368,14 @@ export default {
                             break
                     }
                 }
+                OfferCreate['Account'] = this.$store.getters.getAccount
 
-                await xapp.signPayload({
-                    txjson: OfferCreate
-                })
+                if(process.env.VUE_APP_ENV === 'WEB') {
+                    this.$emitter.emit('signModalOpen', OfferCreate)
+                } else {
+                    await xapp.signPayload({ txjson: OfferCreate })
+                }
+                
             } catch(e) {
                 if(e.error !== false) {
                     this.$emitter.emit('modal', {

@@ -37,6 +37,14 @@ export default {
                 this.initChart()
                 this.setChartData()
             }
+        },
+        '$store.getters.getActiveCandleData': function() {
+            if(this.init) {
+                const data = this.$store.getters.getActiveCandleData
+                console.warn('Updated candle stick chart data:', data)
+
+                this.candlestickChart.updateCandlestick(data.time, data.open, data.high, data.low, data.close)
+            }
         }
     },
     methods: {
@@ -46,8 +54,18 @@ export default {
             // console.log(data[0])
 
             data.forEach(entry => {
-                this.candlestickChart.addCandlestick(Date.parse(entry.start), entry.open, entry.high, entry.low, entry.close)
+                this.candlestickChart.addCandlestick(entry.time, entry.open, entry.high, entry.low, entry.close)
             })
+            
+
+            // todo delete me::
+            // const ms = 86_400_000
+            // const today = new Date().getTime()
+            // for(let i = 1; i < 100; i++) {
+            //     const calc = today - ms * i
+            //     this.candlestickChart.addCandlestick(calc, 0.2 + i * 0.1, 0.45 + i * 0.1, 0.1+ i * 0.1, 0.3 + i * 0.1)
+            // }
+
             this.candlestickChart.draw()
 
             this.loading = false
@@ -81,6 +99,11 @@ export default {
                     gridColor: '#000',
                     yGridCells: 5
                 })
+
+            // this.candlestickChart.panningAtStartCallback = async () => {
+            //     console.warn('test')
+            //     await this.$store.dispatch('getChartData', { marker: true })
+            // }
         }
     },
     async mounted() {

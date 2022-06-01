@@ -294,14 +294,11 @@ export default {
             }
 
             try {
-                const payload = {
-                    txjson: {
+                this.$emitter.emit('signModalOpen', {
+                        Account: this.$store.getters.getAccount,
                         TransactionType: "OfferCancel",
-                        OfferSequence: order.seq || order.sequence,
-                        Account: this.account
-                    }
-                }
-                await xapp.signPayload(payload)
+                        OfferSequence: order.seq || order.sequence
+                    })
             } catch(e) {
                 if(e.error !== false) {
                     this.$emitter.emit('modal', {
@@ -317,9 +314,19 @@ export default {
             const txId = (order.status === 'open' ? order.hashes[0] : (order.hashes[order.hashes.length - 1] || order.hashes[0]) )
 
             if(typeof window.ReactNativeWebView === 'undefined' || process.env.VUE_APP_ENV !== 'XAPP') {
-                alert('todo, check for connected node')
-                window.open(`https://livenet.xrpl.org/transactions/${txId}`)
-                return
+
+                let net
+                switch(this.$store.getters.getActiveNode?.type) {
+                    case 'MAINNET':
+                        net = 'livenet'
+                        break
+                    case 'TESTNET':
+                        net = 'testnet'
+                        break
+                    default:
+                        return alert('This node doesn\'t have website: ' + this.$store.getters.getActiveNode?.type)
+                }
+                return window.open(`https://${net}.xrpl.org/transactions/${txId}`)
             }
 
             try {
@@ -327,8 +334,6 @@ export default {
                 if (xapp.versionCheck(data.version, '2.1.0') < 0) throw 'Update XUMM to use this feature'
                 
                 xapp.openTxViewer(txId, this.$store.getters.getAccount)
-                // if(data.nodetype === 'MAINNET') xapp.openExternalBrowser(`https://livenet.xrpl.org/transactions/${txId}`)
-                // else if(data.nodetype === 'TESTNET') xapp.openExternalBrowser(`https://testnet.xrpl.org/transactions/${txId}`)
             } catch(e) {
                 this.$emitter.emit('modal', {
                     type: 'error',

@@ -1,205 +1,15 @@
 <template>
-    <div id="view">
-        <div v-if="!ready" style="display: flex; width: 100%; height: 100%;">
-            <Spinner style="margin: auto"/>
-        </div>
-        <Test v-else-if="!init" @passed="completedTest" />
-        <Controller v-else />
-        <Modal />
-        <Alert />
-        <div v-if="error" class="column h-100">
-            <div id="failed-start" class="column">
-                <fa :icon="['fas', 'exclamation-circle']" />
-                <p>{{ error }}</p>
-                <a @click="if($t('xapp.error.get_ott_data') === error) getTokenData(); else if($t('xapp.error.subscribe_to_account') === error) subscribe();" class="btn btn-primary">{{ $t("xapp.button.try_again") }}</a>
-            </div>
-        </div>
-    </div>
+    <Alert />
+    <router-view />
 </template>
 
 <script>
-import Controller from '@/views/Controller.vue'
 import Alert from '@/components/Alert.vue'
-import Spinner from '@/components/Spinner.vue'
-import Modal from '@/components/Modal.vue'
-import Test from '@/components/Test.vue'
-
-import xapp from './plugins/xapp'
-import client from './plugins/ws-client'
-
-import client2 from './plugins/ws-client-secondary'
 
 export default {
 	name: 'App',
 	components: {
-        Alert,
-        Spinner,
-        Modal,
-        Test,
-        Controller
-	},
-	data() {
-		return {
-			init: false,
-			ready: false,
-			error: false
-		}
-	},
-	computed: {
-		account() {
-			return this.$store.getters.getAccount
-		}
-	},
-	methods: {
-        async onboardingCheck() {
-            let initSaved = false
-            try {
-                const dataresult = await xapp.getUserData('onboarding')
-                if(dataresult?.onboarding?.init === true) {
-                    this.init = true
-                    return
-                }
-            } catch(e) {
-                console.error('getting user data')
-            }
-
-            if(localStorage.getItem('onboarding')) {
-                this.init = true
-
-                if(!initSaved) {
-                    try {
-                        await xapp.setUserData('onboarding', { init: true })
-                        // localStorage.removeItem('onboarding')
-                    } catch(e) {
-                        console.error('Error setting data into XUMM:', e)
-                    }
-                }
-            }
-        },
-		async wsConnect(data) {
-            try {
-                if(!data) data = await xapp.getTokenData()
-                this.$store.dispatch('connectToNode')
-                this.$store.dispatch('setAccount', data.account)
-                this.error = false
-            } catch(e) {
-                this.error = this.$t('xapp.error.subscribe_to_ledger')
-                throw e
-            }
-        },
-		async getTokenData() {
-            try {
-                const urlParams = new URLSearchParams(window.location.search)
-                const ott = urlParams.get('xAppToken')
-                const data = await xapp.getTokenData(ott)
-
-                if(data.hasOwnProperty('currency') && data.hasOwnProperty('issuer')) {
-                    if(String(data.base).toLowerCase() === 'true') {
-                        this.$store.dispatch('changeCurrencyPair', { base: { currency: data.currency, issuer: data.issuer }, quote: { currency: 'XRP', issuer: null } })
-                    } else {
-                        this.$store.dispatch('changeCurrencyPair', { quote: { currency: data.currency, issuer: data.issuer } })
-                    }
-                } else if(data.hasOwnProperty('base') && data.hasOwnProperty('quote')) {
-                    const payload = {}
-                    // XUMM doesn't return the '+' sign it converts to a space: 
-                    const baseSplitted = data.base.split(' ', 2)
-                    const quoteSplitted = data.quote.split(' ', 2)
-
-                    if(baseSplitted.length > 1) {
-                        payload.base = {
-                            currency: baseSplitted[0],
-                            issuer: baseSplitted[1]
-                        }
-                    } else if(String(data.base).toUpperCase() === 'XRP') payload.base = 'XRP'
-
-                    if(quoteSplitted.length > 1) {
-                        payload.quote = {
-                            currency: quoteSplitted[0],
-                            issuer: quoteSplitted[1]
-                        }
-                    } else if(String(data.quote).toUpperCase() === 'XRP') payload.quote = 'XRP'
-                    this.$store.dispatch('changeCurrencyPair', payload)
-                }
-
-                if(this.error === this.$t('xapp.error.get_ott_data')) {
-                    this.error = false
-                    try {
-                        await this.wsConnect(data)
-                        this.ready = true
-                    } catch(e) {}
-                }
-                return data
-            } catch(e) {
-                this.error = this.$t('xapp.error.get_ott_data')
-                throw e
-            }
-        },
-		completedTest(bool) {
-			if(!bool) return
-			this.init = true
-		},
-        getWebSocketUrl(nodetype) {
-            switch (nodetype) {
-                case "MAINNET":
-                    return 'wss://xrplcluster.com'
-                case "TESTNET":
-                    return 'wss://s.altnet.rippletest.net:51233'
-                    return 'wss://testnet.xrpl-labs.com'
-            }
-            return 'wss://xrplcluster.com'
-        }
-	},
-	async mounted() {
-		try {
-			if (typeof window.ReactNativeWebView === 'undefined') {
-                console.warn('THIS IS DEVMODE')
-                const data = {
-                    // account: 'raS7yFXbzWMwsaPxdGjHN15XEdroZPq8Sg',
-                    // account: 'rJR4MQt2egH9AmibZ8Hu5yTKVuLPv1xumm',
-                    // nodetype: 'MAINNET',
-                    // account: 'rpDpacp6FX4qXdaXHp8Tvt88CFewdCNEVw',
-                    // account: 'rLyYk3V8siKuUSyHrBfHXnEx7YxhatgmyC',
-                    account: 'rLWQ9tsmrJJc9wUmHDaHNGzUNK7dGefRZk',
-                    nodetype: 'TESTNET'
-                }
-                client.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-                // todo delete if issue is resolved
-                client2.connect(this.getWebSocketUrl(data.nodetype), { NoUserAgent: true, MaxConnectTryCount: 5 })
-				this.$store.dispatch('setAccount', data.account)
-                this.ready = true
-            } else {
-                const data = await this.getTokenData()
-                await this.wsConnect(data)                
-            }
-		} catch(e) { return }
-
-        try {
-            await this.onboardingCheck()
-        } catch(e) {
-            console.error('onboarding check',)
-        }
-
-        this.ready = true
-
-        try {
-            client.send({
-                command: 'subscribe',
-                accounts: [this.$store.getters.getAccount]
-            })
-        } catch(e) {
-            this.error = this.$t('xapp.error.subscribe_to_account')
-            alert(this.error)
-        }
-
-		client.on('transaction', tx => {
-            // Next line is used to parse account subscribe txn
-			this.$store.dispatch('parseTx', { transaction: tx, notify: true })
-            
-		})
-
-        client2.on('transaction', tx => {
-            this.$store.dispatch('parseOrderBookChanges', { tx, emitter: this.$emitter })
-        })
+        Alert
 	},
     beforeUnmount() {
         this.$emitter.all.clear()
@@ -219,7 +29,7 @@ export default {
     height: 100%;
     overflow-y: auto;
 }
-#view {
+.view-container {
     height: 100%;
     overflow: hidden;
     color: var(--var-txt-color);

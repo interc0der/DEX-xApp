@@ -19,7 +19,7 @@
         <div class="chart-container-view" ref="chartContainer">
             <LightChart v-if="activeChart === 'Basic'"/>
             <DepthChart v-else-if="activeChart === 'Depth'" />
-            <Charts v-else-if="activeChart === 'TradingView'" />
+            <TradingViewChart v-else-if="activeChart === 'TradingView'" />
         </div>
     </div>
 </template>
@@ -29,11 +29,11 @@
 import LightChart from '../components/LightChart.vue'
 
 import DepthChart from '../components/DepthChart.vue'
-import Charts from '../components/Charts.vue'
+import TradingViewChart from '../components/TradingViewChart.vue'
 
 export default {
     components: {
-        Charts,
+        TradingViewChart,
         LightChart,
         DepthChart
     },
