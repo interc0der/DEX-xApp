@@ -97,6 +97,7 @@ import { currencyCodeFormat } from '../plugins/number-format'
 import xapp from '../plugins/xapp'
 
 import _merge from 'lodash/merge'
+import xummConnector from '../plugins/xumm-connector'
 
 export default {
     emits: ['close'],
@@ -270,24 +271,19 @@ export default {
     },
     async created() {
         try {
-            this.curatedAssets = await xapp.getCuratedAssets()
-        } catch(e) {
-            this.$emitter.emit('modal', {
-                type: 'error',
-                title: this.$t('xapp.error.modal_title'),
-                text: this.$t('xapp.error.get_curated_assets'),
-                buttonText: this.$t('xapp.button.close')
-            })
+            this.curatedAssets = await xummConnector.getCuratedAssets()
+        } catch(err) {
+            try {
+                this.curatedAssets = await xapp.getCuratedAssets()
+            } catch(e) {
+                this.$emitter.emit('modal', {
+                    type: 'error',
+                    title: this.$t('xapp.error.modal_title'),
+                    text: this.$t('xapp.error.get_curated_assets'),
+                    buttonText: this.$t('xapp.button.close')
+                })
+            }
         }
-
-        // try {
-        //     const res = await fetch('https://tokens.xumm.community/api/v1/tokens')
-        //     // const res = await axios.get('https://tokens.xumm.community/api/v1/tokens')
-        //     this.tokens = res.tokens
-        // } catch(e) {
-        //     // alert('error with nixer API')
-        //     // alert(e)
-        // }
     }
 }
 </script>

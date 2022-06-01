@@ -1,11 +1,7 @@
-import xapp from '../../plugins/xapp'
 import client from '../../plugins/ws-client'
-
 import client2 from '../../plugins/ws-client-secondary'
 
 const state = {
-    // nodetype: 'MAINNET',
-    // websocket: 'wss://xrplcluster.com/',
     node: {
         type: 'MAINNET',
         url: 'wss://xrplcluster.com/'
@@ -66,7 +62,6 @@ const actions = {
     initDataNode: (context) => {
         client.on('transaction', tx => {
 			context.dispatch('parseTx', { transaction: tx, notify: true })
-            
 		})
         client2.on('transaction', tx => {
             context.dispatch('parseOrderBookChanges', { tx })

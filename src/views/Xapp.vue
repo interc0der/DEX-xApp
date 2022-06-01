@@ -1,20 +1,24 @@
 <template>
     <div id="view" class="view-container">
+
         <div v-if="!ready" style="display: flex; width: 100%; height: 100%;">
             <Spinner style="margin: auto"/>
         </div>
-        <Test v-else-if="!init" @passed="completedTest" />
-        <Controller v-else />
-        <Modal />
-        <Alert />
-        <div v-if="error" class="column h-100">
+        
+        <div v-else-if="error" class="column h-100">
             <div id="failed-start" class="column">
                 <fa :icon="['fas', 'exclamation-circle']" />
                 <p>{{ error }}</p>
                 <a @click="if($t('xapp.error.get_ott_data') === error) getTokenData(); else if($t('xapp.error.subscribe_to_account') === error) subscribe();" class="btn btn-primary">{{ $t("xapp.button.try_again") }}</a>
             </div>
         </div>
+
+        <Test v-else-if="!init" @passed="completedTest" />
+        <Controller v-else />
     </div>
+
+    <Modal />
+    <Alert />
 </template>
 
 <script>
@@ -172,6 +176,11 @@ export default {
 	},
     beforeUnmount() {
         this.$emitter.all.clear()
+    },
+    errorCaptured(err, vm, info) {
+        console.error('VUEJS error:', err)
+        console.error('VUEJS errorInfo:', info)
+        alert(err)
     }
 }
 </script>
@@ -187,11 +196,12 @@ export default {
     -moz-osx-font-smoothing: grayscale;
     height: 100%;
     overflow-y: auto;
+    user-select: none;
+    color: var(--var-txt-color);
 }
 .view-container {
     height: 100%;
     overflow: hidden;
-    color: var(--var-txt-color);
     user-select: none;
 }
 #failed-start {

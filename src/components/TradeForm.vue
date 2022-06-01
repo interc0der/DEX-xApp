@@ -215,6 +215,7 @@ export default {
             this.InputQuantity = null
             this.limitPriceInputError = false
             this.quantityInputError = false
+            this.sliderValue = null
 
             this.direction = direction
         },
@@ -373,7 +374,18 @@ export default {
                 if(process.env.VUE_APP_ENV === 'WEB') {
                     this.$emitter.emit('signModalOpen', OfferCreate)
                 } else {
-                    await xapp.signPayload({ txjson: OfferCreate })
+                    const txResult = await xapp.signPayload({ txjson: OfferCreate })
+                    if(true) {
+                        // todo chek tx result is tesSUCCESS
+                        this.quantity = null
+                        this.InputQuantity = null
+                        this.limitPrice = null
+                        this.InputLimitPrice = null
+                        this.sliderValue = null
+                        this.limitPriceInputError = false
+                        this.quantityInputError = false
+                        console.log(txResult)
+                    }
                 }
                 
             } catch(e) {

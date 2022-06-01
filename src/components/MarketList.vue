@@ -5,9 +5,9 @@
                 <input type="text" placeholder="Search" v-model="search">
             </div>
             <div class="tabs-row">
-                <label v-for="table in availableTables">
-                    <input type="radio" :value="table" name="market-tabs" v-model="activeTable"/>
-                    <span>{{ table }}</span>
+                <label v-for="(table, index, key) in getTokenList">
+                    <input type="radio" :value="index" name="market-tabs" v-model="activeCurrency"/>
+                    <span>{{ index }}</span>
                 </label>
             </div>
             <hr>
@@ -21,10 +21,10 @@
             </div>
             <div class="market-list-wrapper">
                 <div class="list">
-                    <div class="tr" v-for="token in 50">
-                        <div class="td" style="margin-right: auto">BTC</div>
-                        <div class="td number" style="width: 75px">30,499.75</div>
-                        <div class="td number" style="width: 50px">+0.79%</div>
+                    <div class="tr" v-for="token in tokenList">
+                        <div class="td" style="margin-right: auto">{{ currencyCodeFormat(token.currency) }}</div>
+                        <div class="td number" style="width: 125px">{{ priceFormat(token.market) }}</div>
+                        <div class="td number" style="width: 50px">!todo! +1.35%</div>
                     </div>
                 </div>
             </div>
@@ -33,19 +33,38 @@
 </template>
 
 <script>
+import { quantityFormat, priceFormat, currencyFormat, prefixNumber, currencyCodeFormat } from '../plugins/number-format'
+
 export default {
     data() {
         return {
             search: null,
-            activeTable: 'XRP',
-            availableTables: ['XRP', 'USD']
+            activeCurrency: 'XRP',
+            // availableTables: ['XRP', 'USD']
         }
     },
     computed: {
-
+        getTokenList() {
+            return this.$store.getters.getActiveMarketTokenList
+        },
+        tokenList() {
+            const list = this.getTokenList[this.activeCurrency]
+                // todo filter
+            if(this.search) {
+                return list.filter(item => {
+                    return item.currency.toLowerCase().indexOf(this.search.toLowerCase()) !== -1
+                })
+            } else {
+                return list
+            }
+        }
+    },
+    methods: {
+        priceFormat,
+        currencyFormat,
+        currencyCodeFormat
     },
     mounted() {
-        console.log('test')
         this.$store.dispatch('getActiveMarketTokenList')
     }
 }

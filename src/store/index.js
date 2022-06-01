@@ -1,4 +1,3 @@
-
 import { createStore } from 'vuex'
 
 import settings from './modules/settings'

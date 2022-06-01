@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 const apiEndPoint = 'https://xumm.app/api/v1/xapp-jwt'
 const api = process.env.VUE_APP_XAPP_KEY_WEB
 let jwtToken
+let curatedAssets
 
 const authenticate = (state) => {
     const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) //random string
@@ -34,8 +35,17 @@ const sendToSign = async (payload) => {
     return res.data
 }
 
+const getCuratedAssets = async () => {
+    if(curatedAssets && Object.keys(curatedAssets).length > 0 && curatedAssets.constructor === Object) return curatedAssets
+    
+    const res = await axios.get('https://xumm.app/api/v1/platform/curated-assets')
+    curatedAssets = res.data
+    return curatedAssets
+}
+
 export default {
     authenticate,
     setJwt,
-    sendToSign
+    sendToSign,
+    getCuratedAssets
 }
