@@ -8,6 +8,7 @@ const apiEndPoint = 'https://xumm.app/api/v1/xapp-jwt'
 const apiKey = process.env.VUE_APP_XAPP_KEY
 
 const headers = () => {
+    if(!jwt) throw new Error('No JWT present for header')
     return { headers: { Authorization: `Bearer ${jwt}` } }
 }
 
