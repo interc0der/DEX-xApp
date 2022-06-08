@@ -22,6 +22,25 @@ const authenticate = (state) => {
     window.open(`https://oauth2.xumm.app/auth?${qstring}`)
 }
 
+const authenticateWithPopup = (state) => {
+    const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) //random string
+
+    const qstring = new URLSearchParams({
+        client_id: api,
+        redirect_uri: 'http://192.168.1.102:8080/auth',
+        scope: 'somescope',
+        response_type: 'token',
+        response_mode: 'query',
+        state: btoa(state),
+        //buf.toString('base64')
+        nonce: nonce
+    })
+    
+    const url = `https://oauth2.xumm.app/auth?${qstring}`;
+    window.open(url, "popup", "location=no,width=400,height=700,scrollbars=no,top=100,left=700,resizable=no");
+}
+
+
 const setJwt = (token) => {
     jwtToken = token
 
