@@ -36,8 +36,13 @@ const authenticateWithPopup = (state) => {
         nonce: nonce
     })
     
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
+    const width = 400;
+    const height = 700;
+ 
     const url = `https://oauth2.xumm.app/auth?${qstring}`;
-    window.open(url, "popup", "location=no,width=400,height=700,scrollbars=no,top=100,left=700,resizable=no");
+    window.open(url, "popup", `location=no,width=${width},height=${height},top=0,left=${screenWidth-width},resizable=no`);
 }
 
 
